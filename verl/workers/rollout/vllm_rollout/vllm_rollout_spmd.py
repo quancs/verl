@@ -216,13 +216,15 @@ class vLLMRollout(BaseRollout):
             repetition_penalty=config.get("repetition_penalty", 1.0),
         )
 
-        kwargs["detokenize"] = False
+        kwargs["detokenize"] = True
 
         # supporting adding any sampling params from the config file
         for k in config.keys():
             if hasattr(SamplingParams(), str(k)) and k != "seed":
                 kwargs[k] = config.get(k)
         kwargs["n"] = 1  # already repeat in ray_trainer
+        kwargs['stop'] = "</answer>"
+        # logger.info(f"[taro_debug] stop: {kwargs['stop']}")
         print(f"kwargs: {kwargs}")
         self.sampling_params = SamplingParams(**kwargs)
 
@@ -341,7 +343,7 @@ class vLLMRollout(BaseRollout):
                 prompts=vllm_inputs,  # because we have already convert it to prompt token id
                 sampling_params=self.sampling_params,
                 lora_request=lora_requests,
-                use_tqdm=False,
+                use_tqdm=True,
             )
 
             # TODO(sgm): disable logprob when recompute_log_prob is enable

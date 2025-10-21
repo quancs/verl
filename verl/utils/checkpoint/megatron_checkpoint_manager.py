@@ -247,6 +247,9 @@ class MegatronCheckpointManager(BaseCheckpointManager):
                 key = "model"
             if hasattr(model, "module"):
                 model = model.module
+            
+            # shard_dict = model.sharded_state_dict()
+            # logger.info(f"[taro_debug] Rank {self.rank} model.sharded_state_dict fix {repr(shard_dict)}")
             state_dict[key] = model.sharded_state_dict()
 
         # Optimizer State Dict
@@ -359,6 +362,19 @@ class MegatronCheckpointManager(BaseCheckpointManager):
                     logger=logger,
                 )
 
+    def fix_pin(self, key, value):
+        if isinstance(value, dict):
+            logger.info(f"[taro_debug] {key} is dict, go on...")
+            for subkey, subvalue in value.items():
+                value[subkey] = self.fix_pin(subkey, subvalue)
+            return value
+        elif isinstance(value, torch.Tensor):
+            logger.info(f"[taro_debug] {key} is tensor, fix_pin")
+            return value.detach().cpu()
+        else:
+            logger.info(f"[taro_debug] {key} is neither dict nor tensor, return")
+            return value
+
     def save_checkpoint(self, local_path: str, hdfs_path: str = None, global_step: int = 0, max_ckpt_to_keep=None):
         # record the previous global step
         self.previous_global_step = global_step
@@ -385,6 +401,9 @@ class MegatronCheckpointManager(BaseCheckpointManager):
                 self.should_save_model, self.should_save_optimizer, self.should_save_extra
             )
             log_with_rank(f"Generated state dict for saving: {state_dict.keys()}", rank=self.rank, logger=logger)
+            
+            # for key, value in state_dict.items():
+            #     state_dict[key] = self.fix_pin(key, value)
             for vpp_rank, model in enumerate(self.model):
                 if len(self.model) > 1:
                     model_i_keys = state_dict[f"model{vpp_rank}"].keys()

@@ -265,7 +265,7 @@ def _fused_GPTModel_forward(
     output_weight = None
     if self.share_embeddings_and_output_weights:
         output_weight = self.shared_embedding_or_output_weight()
-
+    # print(f'[taro_debug] {self.mtp_process=}')
     if self.mtp_process:
         hidden_states = self.mtp(
             input_ids=input_ids,
