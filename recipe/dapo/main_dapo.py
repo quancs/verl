@@ -86,7 +86,7 @@ class TaskRunner:
         # instantiate tokenizer
         from verl.utils import hf_processor, hf_tokenizer
 
-        tokenizer = hf_tokenizer(local_path)
+        tokenizer = hf_tokenizer(local_path, trust_remote_code=config.actor_rollout_ref.model.trust_remote_code)
         processor = hf_processor(local_path, use_fast=True)  # used for multimodal LLM, could be none
 
         from verl.single_controller.ray import RayWorkerGroup
