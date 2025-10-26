@@ -4,6 +4,7 @@ project_name='moonlight_base_zero'
 exp_name='exp'
 
 EXP_DIR=/data/q00887491/logs/$(date +%Y%m%d_%H%M%S)
+mkdir -p $EXP_DIR
 cd /workspace/verl
 
 echo ">>Starting script at: $(date), path = $(pwd), project_name=${project_name}, exp_name=${exp_name}, exp_dir=${EXP_DIR}"
@@ -121,12 +122,14 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}'
     data.max_prompt_length=${max_prompt_length} \
     data.max_response_length=${max_response_length} \
     data.train_batch_size=${train_prompt_bsz} \
+    data.trust_remote_code=True \
     actor_rollout_ref.rollout.n=${n_resp_per_prompt} \
     algorithm.adv_estimator=${adv_estimator} \
     algorithm.use_kl_in_reward=${use_kl_in_reward} \
     algorithm.kl_penalty=${kl_penalty} \
     algorithm.kl_ctrl.kl_coef=${kl_coef} \
     actor_rollout_ref.model.path="${MODEL_PATH}" \
+    actor_rollout_ref.model.trust_remote_code=True \
     actor_rollout_ref.actor.use_kl_loss=${use_kl_loss} \
     actor_rollout_ref.actor.kl_loss_coef=${kl_loss_coef} \
     actor_rollout_ref.actor.policy_loss.loss_mode=vanilla \

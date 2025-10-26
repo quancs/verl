@@ -2,8 +2,9 @@ pkill -9 python
 ray stop --force
 rm -rf /tmp/ray
 
-export RAY_DEBUG=0
-export RAY_DEDUP_LOGS=0
+export RAY_DEBUG=1  # 允许ray debug
+export RAY_DEBUG_POST_MORTEM=1
+export RAY_DEDUP_LOGS=1  # Ray 日志去重
 export HYDRA_FULL_ERROR=1
 
 #修改为当前需要跑的用例路径
