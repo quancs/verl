@@ -5,38 +5,70 @@ rm -rf /tmp/ray
 export RAY_DEBUG=0
 export RAY_DEDUP_LOGS=0
 export HYDRA_FULL_ERROR=1
-#TASK_QUEUE_ENABLE，下发优化，图模式设置为1，非图模式设置为2
-export TASK_QUEUE_ENABLE=1  
+
+#修改为当前需要跑的用例路径
+DEFAULT_SH="/workspace/verl/recipe/dx/run.sh"
+echo "Use $DEFAULT_SH"
+
+ulimit -n 32768
+
+NNODES=2
+NPUS_PER_NODE=8
+GPUS_PER_NODES=$NPUS_PER_NODE
+#修改为对应主节点IP
+MASTER_ADDR=90.91.103.34
+
+# 修改为当前节点的通信网卡
+SOCKET_IFNAME="enp83s0f0np0"
+export GLOO_SOCKET_IFNAME=$SOCKET_IFNAME
+
+
+
+######################
+# GPU相关的环境变量
+export NCCL_SOCKET_IFNAME=$SOCKET_IFNAME
+######################
+
+
+
+######################
+# NPU相关的环境变量
+
+#! HCCL 相关配置
+# export HCCL_EXEC_TIMEOUT=7200
+# export HCCL_EVENT_TIMEOUT=7200
+# export HCCL_CONNECT_TIMEOUT=7200
+# export ACL_DEVICE_SYNC_TIMEOUT=7200
+# export HCCL_ASYNC_ERROR_HANDLING=0
+# export P2P_HCCL_BUFFSIZE=30
+# export HCCL_BUFFSIZE=600
+
+export HCCL_SOCKET_IFNAME=$SOCKET_IFNAME
+export TP_SOCKET_IFNAME=$SOCKET_IFNAME   # NPU？
+
 export HCCL_ASYNC_ERROR_HANDLING=0
 export HCCL_EXEC_TIMEOUT=3600
 export HCCL_CONNECT_TIMEOUT=3600
 export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
-#修改为当前需要跑的用例路径
-DEFAULT_YAML="/workspace/verl/recipe/dx/run.sh"
-echo "Use $DEFAULT_YAML"
 
-ulimit -n 32768
-mkdir logs
+export PYTORCH_NPU_ALLOC_CONF="max_split_size_mb:2048"
+export ASCEND_GLOBAL_LOG_LEVEL=3 # 3：error级？0：debug级？
 
-NNODES=1
-NPUS_PER_NODE=8
-NGPUS_PER_NODES=$NPUS_PER_NODE
-#修改为对应主节点IP
-MASTER_ADDR=90.91.103.34
+#TASK_QUEUE_ENABLE，下发优化，图模式设置为1，非图模式设置为2。NPU参数？哪个包
+export TASK_QUEUE_ENABLE=2
 
-#修改为当前节点的通信网卡
-SOCKET_IFNAME="enp83s0f0np0"
-export HCCL_SOCKET_IFNAME=$SOCKET_IFNAME
-export NCCL_SOCKET_IFNAME=$SOCKET_IFNAME
-export GLOO_SOCKET_IFNAME=$SOCKET_IFNAME
+# 加入source CANN相关的内容
+
+######################
+
 
 #获取当前节点IP
 CURRENT_IP=$(ifconfig $SOCKET_IFNAME | grep -Eo 'inet (addr:)?([0-9]{1,3}\.){3}[0-9]{1,3}' | awk '{print $NF}')
 echo $CURRENT_IP
 if [ "$MASTER_ADDR" = "$CURRENT_IP" ]; then
   # 主节点启动
-  ray start --head --port 6766 --dashboard-host=$MASTER_ADDR --node-ip-address=$CURRENT_IP --dashboard-port=8260 --resources='{"NPU": '$NPUS_PER_NODE'}'
+  ray start --head --port 4918 --dashboard-host=$MASTER_ADDR --node-ip-address=$CURRENT_IP --dashboard-port=4919
 
   while true; do
       ray_status_output=$(ray status)
@@ -48,7 +80,7 @@ if [ "$MASTER_ADDR" = "$CURRENT_IP" ]; then
       if [ "$device_count" -eq "$NNODES" ]; then
           echo "Ray cluster is ready with $device_count devices (from $npu_count NPU resources), starting Python script."
           ray status
-          bash $DEFAULT_YAML
+          bash $DEFAULT_SH
           break
       else
           echo "Waiting for Ray to allocate $NNODES devices. Current device count: $device_count"
@@ -59,7 +91,7 @@ else
   # 子节点尝试往主节点注册ray直到成功
   while true; do
       # 尝试连接 Ray 集群
-      ray start --address="$MASTER_ADDR:6766" --resources='{"NPU": '$NPUS_PER_NODE'}' --node-ip-address=$CURRENT_IP
+      ray start --address="$MASTER_ADDR:4918" --node-ip-address=$CURRENT_IP
 
       # 检查连接是否成功
       ray status

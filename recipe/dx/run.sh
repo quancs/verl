@@ -1,13 +1,16 @@
 set -x
 
-echo ">>Starting script at: $(date), path = $(pwd)"
+project_name='moonlight_base_zero'
+exp_name='exp'
+
+EXP_DIR=/data/q00887491/logs/$(date +%Y%m%d_%H%M%S)
+cd /workspace/verl
+
+echo ">>Starting script at: $(date), path = $(pwd), project_name=${project_name}, exp_name=${exp_name}, exp_dir=${EXP_DIR}"
 
 NNODES=${NNODES:-1}
 # export NNODES=1
-NGPUS_PER_NODES=${NGPUS_PER_NODES:-8}
-cd /workspace/verl
-project_name='moonlight_base_zero'
-exp_name='dist_pp8_ep16_tp8_offload1_2k_12k_flex'
+GPUS_PER_NODES=${GPUS_PER_NODES:-8}
 
 adv_estimator=grpo
 
@@ -38,8 +41,7 @@ DIST_CKPT_PATH=/data/q00887491/models/Moonlight-16B-A3B-dist
 
 # RAY_DATA_HOME=${RAY_DATA_HOME:-"${HOME}/verl"}
 TRAIN_FILE=/data/q00887491/datasets/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet
-TEST_FILE=/data/q00887491/datasets/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet
-# TEST_FILE=/afs/chatrl/users/lyy/npu/data/aime24.parquet
+TEST_FILE=/data/q00887491/datasets/aime-2024.parquet
 # TEST_FILE="['$aime24_test_path']"
 
 # Algorithm
@@ -55,7 +57,7 @@ infer_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 3))
 
 optimizer_offload_fraction=1
 
-COMMON_PP=${COMMON_PP:-1}
+COMMON_PP=${COMMON_PP:-$NNODES}
 COMMON_VPP=${COMMON_VPP:-null}
 COMMON_CP=${COMMON_CP:-1}
 COMMON_TP=${COMMON_TP:-8}
@@ -100,11 +102,15 @@ USE_DIST_CKPT=False
 # first_layer=6
 # last_layer=7
 # pipeline_num_transformer_layers="[[6],[8],[8],[8],[8],[8],[8],[7]]"
-first_layer=3
-last_layer=2
-# pipeline_num_transformer_layers="[[3],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[2]]"
 
-python3 -m recipe.dapo.main_dapo \
+# first_layer=3
+# last_layer=2
+#     +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_first_pipeline_stage=$first_layer \
+#     +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_last_pipeline_stage=$last_layer \
+
+# pipeline_num_transformer_layers="[[3],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[2]]"
+ray job submit --runtime-env-json='{"working_dir": ".", excludes: ["/.git/"]}' \
+    -- python3 -m recipe.dapo.main_dapo \
     --config-path=config \
     --config-name="dapo_megatron_trainer" \
     actor_rollout_ref.nccl_timeout=7200 \
@@ -134,8 +140,6 @@ python3 -m recipe.dapo.main_dapo \
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=${train_ppo_micro_batch_size_per_gpu} \
     actor_rollout_ref.actor.ppo_max_token_len_per_gpu=${actor_ppo_max_token_len} \
     actor_rollout_ref.actor.optim.lr=3e-6 \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_first_pipeline_stage=$first_layer \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_last_pipeline_stage=$last_layer \
     +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_offload_fraction=${optimizer_offload_fraction} \
     +actor_rollout_ref.actor.optim.override_optimizer_config.overlap_cpu_optimizer_d2h_h2d=True \
     +actor_rollout_ref.actor.optim.override_optimizer_config.use_precision_aware_optimizer=True \
@@ -209,7 +213,7 @@ python3 -m recipe.dapo.main_dapo \
     trainer.logger=['tensorboard'] \
     trainer.project_name="${project_name}" \
     trainer.experiment_name="${exp_name}" \
-    trainer.n_gpus_per_node="${NGPUS_PER_NODES}" \
+    trainer.n_gpus_per_node="${GPUS_PER_NODES}" \
     trainer.nnodes="${NNODES}" \
     trainer.val_before_train=False \
     trainer.balance_batch=False \
@@ -219,4 +223,4 @@ python3 -m recipe.dapo.main_dapo \
     trainer.default_local_dir=$EXP_DIR \
     trainer.resume_mode=auto \
     trainer.rollout_data_dir=$EXP_DIR/rollout \
-    trainer.log_val_generations=10 2>&1 | tee $EXP_DIR/run_$(date +%Y%m%d%H%M%S).log
+    trainer.log_val_generations=10 2>&1 | tee $EXP_DIR/run.log
