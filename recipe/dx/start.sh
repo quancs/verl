@@ -72,13 +72,13 @@ if [ "$MASTER_ADDR" = "$CURRENT_IP" ]; then
 
   while true; do
       ray_status_output=$(ray status)
-      npu_count=$(echo "$ray_status_output" | grep -oP '(?<=/)\d+\.\d+(?=\s*NPU)' | head -n 1)pwd
+      npu_count=$(echo "$ray_status_output" | grep -oP '(?<=/)\d+\.\d+(?=\s*(NPU|GPU))' | head -n 1)pwd
       npu_count_int=$(echo "$npu_count" | awk '{print int($1)}')
       device_count=$((npu_count_int / $NPUS_PER_NODE))
 
       # 判断 device_count 是否与 NNODES 相等
       if [ "$device_count" -eq "$NNODES" ]; then
-          echo "Ray cluster is ready with $device_count devices (from $npu_count NPU resources), starting Python script."
+          echo "Ray cluster is ready with $device_count devices (from $npu_count NPU/GPU resources), starting Python script."
           ray status
           bash $DEFAULT_SH
           break
@@ -105,4 +105,4 @@ else
   done
 fi
 
-sleep 600
+echo "start.sh ended"
