@@ -109,7 +109,7 @@ USE_DIST_CKPT=False
 #     +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_last_pipeline_stage=$last_layer \
 
 # pipeline_num_transformer_layers="[[3],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[2]]"
-ray job submit --runtime-env-json='{"working_dir": ".", excludes: ["/.git/"]}' \
+ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}' \
     -- python3 -m recipe.dapo.main_dapo \
     --config-path=config \
     --config-name="dapo_megatron_trainer" \
