@@ -9,10 +9,6 @@ cd /workspace/verl
 
 echo ">>Starting script at: $(date), path = $(pwd), project_name=${project_name}, exp_name=${exp_name}, exp_dir=${EXP_DIR}"
 
-NNODES=${NNODES:-1}
-# export NNODES=1
-GPUS_PER_NODES=${GPUS_PER_NODES:-8}
-
 adv_estimator=grpo
 
 use_kl_in_reward=False
@@ -123,9 +119,6 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}'
     data.max_response_length=${max_response_length} \
     data.train_batch_size=${train_prompt_bsz} \
     data.trust_remote_code=True \
-    +actor_rollout_ref.model.override_config.model_config.rope_scaling.type=yarn \
-    +actor_rollout_ref.model.override_config.model_config.rope_scaling.factor=4.0 \
-    +actor_rollout_ref.model.override_config.model_config.rope_scaling.original_max_position_embeddings=8192 \
     actor_rollout_ref.rollout.n=${n_resp_per_prompt} \
     algorithm.adv_estimator=${adv_estimator} \
     algorithm.use_kl_in_reward=${use_kl_in_reward} \
@@ -229,4 +222,4 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}'
     trainer.default_local_dir=$EXP_DIR \
     trainer.resume_mode=auto \
     trainer.rollout_data_dir=$EXP_DIR/rollout \
-    trainer.log_val_generations=10 2>&1 | tee $EXP_DIR/run.log
+    trainer.log_val_generations=10 2>&1 # | tee $EXP_DIR/run.log
