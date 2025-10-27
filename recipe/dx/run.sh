@@ -54,7 +54,7 @@ infer_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 3))
 
 optimizer_offload_fraction=1
 
-COMMON_PP=${COMMON_PP:-$NNODES}
+COMMON_PP=${COMMON_PP:-2}
 COMMON_VPP=${COMMON_VPP:-null}
 COMMON_CP=${COMMON_CP:-1}
 COMMON_TP=${COMMON_TP:-8}
@@ -100,11 +100,8 @@ USE_DIST_CKPT=False
 # last_layer=7
 # pipeline_num_transformer_layers="[[6],[8],[8],[8],[8],[8],[8],[7]]"
 
-# first_layer=3
-# last_layer=2
-#     +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_first_pipeline_stage=$first_layer \
-#     +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_last_pipeline_stage=$last_layer \
-
+first_layer=14
+last_layer=13
 # pipeline_num_transformer_layers="[[3],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[2]]"
 ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}' \
     -- python3 -m recipe.dapo.main_dapo \
@@ -139,6 +136,8 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}'
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=${train_ppo_micro_batch_size_per_gpu} \
     actor_rollout_ref.actor.ppo_max_token_len_per_gpu=${actor_ppo_max_token_len} \
     actor_rollout_ref.actor.optim.lr=3e-6 \
+    +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_first_pipeline_stage=$first_layer \
+    +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_last_pipeline_stage=$last_layer \
     +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_offload_fraction=${optimizer_offload_fraction} \
     +actor_rollout_ref.actor.optim.override_optimizer_config.overlap_cpu_optimizer_d2h_h2d=True \
     +actor_rollout_ref.actor.optim.override_optimizer_config.use_precision_aware_optimizer=True \
@@ -209,7 +208,7 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}'
     +reward_model.reward_kwargs.overlong_buffer_cfg.penalty_factor=${overlong_penalty_factor} \
     +reward_model.reward_kwargs.overlong_buffer_cfg.log=False \
     +reward_model.reward_kwargs.max_resp_len=${max_response_length} \
-    trainer.logger=['tensorboard'] \
+    trainer.logger="['console','tensorboard']" \
     trainer.project_name="${project_name}" \
     trainer.experiment_name="${exp_name}" \
     trainer.n_gpus_per_node="${GPUS_PER_NODES}" \
@@ -222,4 +221,33 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}'
     trainer.default_local_dir=$EXP_DIR \
     trainer.resume_mode=auto \
     trainer.rollout_data_dir=$EXP_DIR/rollout \
-    trainer.log_val_generations=10 2>&1 # | tee $EXP_DIR/run.log
+    trainer.log_val_generations=10 2>&1 | tee $EXP_DIR/run.log
+
+
+
+    # +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_offload_fraction=${optimizer_offload_fraction} \   # 141-144：可能跑不通
+    # +actor_rollout_ref.actor.optim.override_optimizer_config.overlap_cpu_optimizer_d2h_h2d=True \
+    # +actor_rollout_ref.actor.optim.override_optimizer_config.use_precision_aware_optimizer=True \  # 特别关注
+    # +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_cpu_offload=True \
+
+
+    # ++actor_rollout_ref.actor.megatron.override_transformer_config.attention_backend=fused \    # 作用？
+
+
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.apply_rope_fusion=False \      # 159-170：现场关掉了，哪些能用？叶朕源
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.masked_softmax_fusion=True \
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.bias_activation_fusion=True \
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.bias_dropout_fusion=True \
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.gradient_accumulation_fusion=True \
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.deallocate_pipeline_outputs=True \
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.persist_layer_norm=True \
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_grouped_gemm=True \
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_permute_fusion=True \
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_shared_expert_overlap=True \
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_token_dispatcher_type="alltoall" \
+
+
+    # actor_rollout_ref.rollout.load_format=dummy \  # safetensor?dummy不支持？
+
+# USE_MBRIDGE=True   # 困难：周洋
+

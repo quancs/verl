@@ -28,6 +28,8 @@ export GLOO_SOCKET_IFNAME=$SOCKET_IFNAME
 ######################
 # GPU相关的环境变量
 export NCCL_SOCKET_IFNAME=$SOCKET_IFNAME
+
+export CUDA_DEVICE_MAX_CONNECTIONS=1   # 利于TP+SP
 ######################
 
 
