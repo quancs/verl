@@ -8,7 +8,7 @@ export RAY_DEDUP_LOGS=1  # Ray 日志去重
 export HYDRA_FULL_ERROR=1
 
 #修改为当前需要跑的用例路径
-DEFAULT_SH="/workspace/verl/recipe/dx/run.sh"
+DEFAULT_SH="/workspace/verl/recipe/moonlight_GPU/run.sh"
 echo "Use $DEFAULT_SH"
 
 ulimit -n 32768
