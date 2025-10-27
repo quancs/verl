@@ -37,8 +37,10 @@ MODEL_PATH=/data/q00887491/models/Moonlight-16B-A3B
 DIST_CKPT_PATH=/data/q00887491/models/Moonlight-16B-A3B-dist
 
 # RAY_DATA_HOME=${RAY_DATA_HOME:-"${HOME}/verl"}
-TRAIN_FILE=/data/q00887491/datasets/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet
-TEST_FILE=/data/q00887491/datasets/aime-2024.parquet
+# TRAIN_FILE=/data/q00887491/datasets/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet
+# TEST_FILE=/data/q00887491/datasets/aime-2024.parquet
+TRAIN_FILE=/data/q00887491/datasets/gsm8k/train.parquet
+TEST_FILE=/data/q00887491/datasets/gsm8k/test.parquet
 # TEST_FILE="['$aime24_test_path']"
 
 # Algorithm
@@ -110,7 +112,7 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}'
     actor_rollout_ref.nccl_timeout=7200 \
     data.train_files="${TRAIN_FILE}" \
     data.val_files="${TEST_FILE}" \
-    data.prompt_key=messages \
+    data.prompt_key=prompt \
     data.truncation='left' \
     data.max_prompt_length=${max_prompt_length} \
     data.max_response_length=${max_response_length} \
@@ -202,7 +204,7 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}'
     actor_rollout_ref.ref.megatron.context_parallel_size=${REF_CP} \
     actor_rollout_ref.ref.megatron.expert_model_parallel_size=${REF_EP} \
     actor_rollout_ref.ref.megatron.expert_tensor_parallel_size=${REF_ETP} \
-    reward_model.reward_manager=dapo \
+    reward_model.reward_manager=math_verify \
     +reward_model.reward_kwargs.overlong_buffer_cfg.enable=${enable_overlong_buffer} \
     +reward_model.reward_kwargs.overlong_buffer_cfg.len=${overlong_buffer_len} \
     +reward_model.reward_kwargs.overlong_buffer_cfg.penalty_factor=${overlong_penalty_factor} \
