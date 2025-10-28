@@ -216,6 +216,7 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}'
     trainer.experiment_name="${exp_name}" \
     trainer.n_gpus_per_node="${GPUS_PER_NODES}" \
     trainer.nnodes="${NNODES}" \
+    trainer.device="npu" \
     trainer.val_before_train=False \
     trainer.balance_batch=False \
     trainer.test_freq=-1 \
