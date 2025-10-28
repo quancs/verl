@@ -27,8 +27,8 @@ loss_agg_mode="token-mean"
 train_prompt_bsz=32
 n_resp_per_prompt=16
 train_prompt_mini_bsz=32
-train_ppo_micro_batch_size_per_gpu=2
-infer_ppo_micro_batch_size_per_gpu=2
+train_ppo_micro_batch_size_per_gpu=1
+infer_ppo_micro_batch_size_per_gpu=1
 # Paths
 MODEL_PATH="/data01/huawei-2025/weight/dsv3-base-hf-wlf-mtp1"
 DIST_CKPT_PATH="/data01/huawei-2025/weight/dsv3_bf16_mcore_full_base"
@@ -45,7 +45,7 @@ top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
 val_top_p=0.7
 
 # Performance Related Parameter
-use_dynamic_bsz=True
+use_dynamic_bsz=False
 actor_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 1))
 infer_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 3))
 
@@ -103,6 +103,9 @@ ray job submit --runtime-env="${RUNTIME_ENV}" \
     -- python3 -m recipe.dapo.main_dapo \
     --config-path=config \
     --config-name="dapo_megatron_trainer" \
+    actor_rollout_ref.rollout.load_format=safetensors \
+    +actor_rollout_ref.actor.megatron.override_transformer_config.tensor_model_parallel_size=${ACTOR_TP} \
+    +actor_rollout_ref.actor.megatron.override_transformer_config.multi_latent_attention=True \
     +actor_rollout_ref.actor.megatron.override_transformer_config.use_flash_attn=True \
     data.train_files="${TRAIN_FILE}" \
     data.val_files="${TEST_FILE}" \
@@ -133,6 +136,7 @@ ray job submit --runtime-env="${RUNTIME_ENV}" \
     +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_first_pipeline_stage=$first_layer \
     +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_last_pipeline_stage=$last_layer \
     +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_offload_fraction=${optimizer_offload_fraction} \
+    +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_cpu_offload=True \
     actor_rollout_ref.actor.megatron.param_offload=True \
     actor_rollout_ref.actor.megatron.optimizer_offload=True \
     actor_rollout_ref.actor.megatron.grad_offload=True \
@@ -154,7 +158,7 @@ ray job submit --runtime-env="${RUNTIME_ENV}" \
     actor_rollout_ref.actor.loss_agg_mode=${loss_agg_mode} \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=${infer_ppo_micro_batch_size_per_gpu} \
     actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu=${infer_ppo_max_token_len} \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.65 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.8 \
     actor_rollout_ref.rollout.tensor_model_parallel_size=${INFER_TP} \
     actor_rollout_ref.rollout.dp_model_parallel_size=${INFER_EP} \
     actor_rollout_ref.rollout.enable_chunked_prefill=False \
@@ -173,7 +177,7 @@ ray job submit --runtime-env="${RUNTIME_ENV}" \
     actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=${infer_ppo_micro_batch_size_per_gpu} \
     actor_rollout_ref.ref.log_prob_max_token_len_per_gpu=${infer_ppo_max_token_len} \
     actor_rollout_ref.ref.megatron.use_dist_checkpointing=${USE_DIST_CKPT} \
-    actor_rollout_ref.ref.megatron.dist_checkpointing_path=${DIST_CKPT_PATH} \
+    actor_rollout_ref.ref.megatron.dist_checkpointing_path=${MCORE_MODEL_PATH} \
     actor_rollout_ref.ref.megatron.param_offload=${offload} \
     actor_rollout_ref.ref.megatron.tensor_model_parallel_size=${REF_TP} \
     actor_rollout_ref.ref.megatron.pipeline_model_parallel_size=${REF_PP} \

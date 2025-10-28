@@ -30,12 +30,12 @@ train_prompt_mini_bsz=32
 train_ppo_micro_batch_size_per_gpu=2
 infer_ppo_micro_batch_size_per_gpu=2
 # Paths
-MODEL_PATH="/data01/huawei-2025/weight/dsv3-base-hf-wlf-mtp1"
+MODEL_PATH="/data01/huawei-2025/gxj/Moonlight-16B-A3B-Instruct/"
 DIST_CKPT_PATH="/data01/huawei-2025/weight/dsv3_bf16_mcore_full_base"
 
 CKPTS_DIR=/data01/huawei-2025/weight/CKPT/ckpt-${exp_name}
-TRAIN_FILE="/data01/huawei-2025/rl_data/dapo-math/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet"
-TEST_FILE="/data01/huawei-2025/rl_data/dapo-math/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet"
+TRAIN_FILE="/data01/huawei-2025/gxj/gsm8k/train.parquet"
+TEST_FILE="/data01/huawei-2025/gxj/gsm8k/test.parquet"
 # TEST_FILE="['$aime24_test_path']"
 
 # Algorithm
@@ -173,7 +173,7 @@ ray job submit --runtime-env="${RUNTIME_ENV}" \
     actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=${infer_ppo_micro_batch_size_per_gpu} \
     actor_rollout_ref.ref.log_prob_max_token_len_per_gpu=${infer_ppo_max_token_len} \
     actor_rollout_ref.ref.megatron.use_dist_checkpointing=${USE_DIST_CKPT} \
-    actor_rollout_ref.ref.megatron.dist_checkpointing_path=${DIST_CKPT_PATH} \
+    actor_rollout_ref.ref.megatron.dist_checkpointing_path=${MCORE_MODEL_PATH} \
     actor_rollout_ref.ref.megatron.param_offload=${offload} \
     actor_rollout_ref.ref.megatron.tensor_model_parallel_size=${REF_TP} \
     actor_rollout_ref.ref.megatron.pipeline_model_parallel_size=${REF_PP} \
