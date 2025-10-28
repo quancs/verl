@@ -76,7 +76,7 @@ CURRENT_IP=$(ifconfig $SOCKET_IFNAME | grep -Eo 'inet (addr:)?([0-9]{1,3}\.){3}[
 echo $CURRENT_IP
 if [ "$MASTER_ADDR" = "$CURRENT_IP" ]; then
   # 主节点启动
-  ray start --head --port 4918 --dashboard-host=$MASTER_ADDR --node-ip-address=$CURRENT_IP --dashboard-port=4919
+  ray start --head --port 4918 --dashboard-host="0.0.0.0" --node-ip-address=$CURRENT_IP --dashboard-port=4919
 
   while true; do
       ray_status_output=$(ray status)
