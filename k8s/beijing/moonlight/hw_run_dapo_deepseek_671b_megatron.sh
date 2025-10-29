@@ -1,10 +1,12 @@
+[BEGIN] 2025/10/29 20:17:04
+[root@pm-d12e0124 moonlight]# cat hw_run_dapo_deepseek_671b_megatron.sh 
 set -x
 
 echo ">>Starting script at: $(date), path = $(pwd)"
-
+EXP_DIR=/data01/huawei-2025/gxj/logs/$(date +%Y%m%d_%H%M%S)
 NGPUS_PER_NODES=${NPU_PER_NODE}
-project_name='DAPO'
-exp_name='DAPO-dpsk-671b-megatron-BASE-256die-npugpu'
+project_name='moonlight_instruct'
+exp_name='DAPO-MoonLight-16b-megatron-2NODES'
 
 adv_estimator=grpo
 
@@ -18,7 +20,7 @@ kl_loss_coef=0.001
 clip_ratio_low=0.2
 clip_ratio_high=0.28
 max_prompt_length=$((1024 * 2))
-max_response_length=$((1024 * 12))
+max_response_length=$((1024 * 4))
 enable_overlong_buffer=True
 overlong_buffer_len=$((1024 * 1))
 overlong_penalty_factor=1.0
@@ -30,12 +32,12 @@ train_prompt_mini_bsz=32
 train_ppo_micro_batch_size_per_gpu=2
 infer_ppo_micro_batch_size_per_gpu=2
 # Paths
-MODEL_PATH="/data01/huawei-2025/gxj/Moonlight-16B-A3B-Instruct/"
-DIST_CKPT_PATH="/data01/huawei-2025/weight/dsv3_bf16_mcore_full_base"
+MODEL_PATH=/data01/huawei-2025/gxj/Moonlight-16B-A3B-Instruct
+DIST_CKPT_PATH=/data01/huawei-2025/gxj/mcore_dist
 
-CKPTS_DIR=/data01/huawei-2025/weight/CKPT/ckpt-${exp_name}
-TRAIN_FILE="/data01/huawei-2025/gxj/gsm8k/train.parquet"
-TEST_FILE="/data01/huawei-2025/gxj/gsm8k/test.parquet"
+# RAY_DATA_HOME=${RAY_DATA_HOME:-"${HOME}/verl"}
+TRAIN_FILE=/data01/huawei-2025/gxj/gsm8k/train.parquet
+TEST_FILE=/data01/huawei-2025/gxj/gsm8k/test.parquet
 # TEST_FILE="['$aime24_test_path']"
 
 # Algorithm
@@ -51,15 +53,15 @@ infer_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 3))
 
 optimizer_offload_fraction=1
 
-COMMON_PP=${COMMON_PP:-8} #* GPU 是 16
+COMMON_PP=${COMMON_PP:-4}
 COMMON_VPP=${COMMON_VPP:-null}
 COMMON_CP=${COMMON_CP:-1}
-COMMON_TP=${COMMON_TP:-8}
-COMMON_EP=${COMMON_EP:-32} #* GPU 是 8
+COMMON_TP=${COMMON_TP:-4}
+COMMON_EP=${COMMON_EP:-4}
 COMMON_ETP=${COMMON_ETP:-1}
+
 TRAIN_TP=${TRAIN_TP:-$COMMON_TP}
-INFER_TP=8
-INFER_EP=8
+INFER_TP=${INFER_TP:-8}
 
 ACTOR_PP=${ACTOR_PP:-$COMMON_PP}
 ACTOR_VPP=${ACTOR_VPP:-$COMMON_VPP}
@@ -93,30 +95,35 @@ USE_MBRIDGE=True
 USE_DIST_CKPT=False
 
 
-first_layer=6
-last_layer=7
+# first_layer=6
+# last_layer=7
+# pipeline_num_transformer_layers="[[6],[8],[8],[8],[8],[8],[8],[7]]"
 
-
+first_layer=7
+last_layer=6
+# pipeline_num_transformer_layers="[[3],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[2]]"
 RUNTIME_ENV=verl/trainer/mc2_env.yaml
 cd /opt/verl
 ray job submit --runtime-env="${RUNTIME_ENV}" \
     -- python3 -m recipe.dapo.main_dapo \
     --config-path=config \
     --config-name="dapo_megatron_trainer" \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.use_flash_attn=True \
+    actor_rollout_ref.nccl_timeout=7200 \
     data.train_files="${TRAIN_FILE}" \
     data.val_files="${TEST_FILE}" \
-    data.prompt_key=messages \
+    data.prompt_key=prompt \
     data.truncation='left' \
     data.max_prompt_length=${max_prompt_length} \
     data.max_response_length=${max_response_length} \
     data.train_batch_size=${train_prompt_bsz} \
+    data.trust_remote_code=True \
     actor_rollout_ref.rollout.n=${n_resp_per_prompt} \
     algorithm.adv_estimator=${adv_estimator} \
     algorithm.use_kl_in_reward=${use_kl_in_reward} \
     algorithm.kl_penalty=${kl_penalty} \
     algorithm.kl_ctrl.kl_coef=${kl_coef} \
     actor_rollout_ref.model.path="${MODEL_PATH}" \
+    actor_rollout_ref.model.trust_remote_code=True \
     actor_rollout_ref.actor.use_kl_loss=${use_kl_loss} \
     actor_rollout_ref.actor.kl_loss_coef=${kl_loss_coef} \
     actor_rollout_ref.actor.policy_loss.loss_mode=vanilla \
@@ -130,6 +137,9 @@ ray job submit --runtime-env="${RUNTIME_ENV}" \
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=${train_ppo_micro_batch_size_per_gpu} \
     actor_rollout_ref.actor.ppo_max_token_len_per_gpu=${actor_ppo_max_token_len} \
     actor_rollout_ref.actor.optim.lr=3e-6 \
+    +actor_rollout_ref.actor.megatron.override_transformer_config.tensor_model_parallel_size=${ACTOR_TP} \
+    +actor_rollout_ref.actor.megatron.override_transformer_config.multi_latent_attention=True \
+    +actor_rollout_ref.actor.megatron.override_transformer_config.use_flash_attn=True \
     +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_first_pipeline_stage=$first_layer \
     +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_last_pipeline_stage=$last_layer \
     +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_offload_fraction=${optimizer_offload_fraction} \
@@ -152,11 +162,11 @@ ray job submit --runtime-env="${RUNTIME_ENV}" \
     +actor_rollout_ref.actor.megatron.override_transformer_config.recompute_num_layers=1 \
     actor_rollout_ref.actor.entropy_coeff=0 \
     actor_rollout_ref.actor.loss_agg_mode=${loss_agg_mode} \
+    actor_rollout_ref.rollout.load_format=safetensors \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=${infer_ppo_micro_batch_size_per_gpu} \
     actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu=${infer_ppo_max_token_len} \
     actor_rollout_ref.rollout.gpu_memory_utilization=0.65 \
     actor_rollout_ref.rollout.tensor_model_parallel_size=${INFER_TP} \
-    actor_rollout_ref.rollout.dp_model_parallel_size=${INFER_EP} \
     actor_rollout_ref.rollout.enable_chunked_prefill=False \
     actor_rollout_ref.rollout.max_num_batched_tokens=$((max_prompt_length + max_response_length)) \
     actor_rollout_ref.rollout.temperature=${temperature} \
@@ -173,7 +183,7 @@ ray job submit --runtime-env="${RUNTIME_ENV}" \
     actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=${infer_ppo_micro_batch_size_per_gpu} \
     actor_rollout_ref.ref.log_prob_max_token_len_per_gpu=${infer_ppo_max_token_len} \
     actor_rollout_ref.ref.megatron.use_dist_checkpointing=${USE_DIST_CKPT} \
-    actor_rollout_ref.ref.megatron.dist_checkpointing_path=${MCORE_MODEL_PATH} \
+    actor_rollout_ref.ref.megatron.dist_checkpointing_path=${DIST_CKPT_PATH} \
     actor_rollout_ref.ref.megatron.param_offload=${offload} \
     actor_rollout_ref.ref.megatron.tensor_model_parallel_size=${REF_TP} \
     actor_rollout_ref.ref.megatron.pipeline_model_parallel_size=${REF_PP} \
@@ -187,6 +197,8 @@ ray job submit --runtime-env="${RUNTIME_ENV}" \
     +reward_model.reward_kwargs.overlong_buffer_cfg.penalty_factor=${overlong_penalty_factor} \
     +reward_model.reward_kwargs.overlong_buffer_cfg.log=False \
     +reward_model.reward_kwargs.max_resp_len=${max_response_length} \
+    custom_reward_function.path=verl/utils/reward_score/math_reward.py \
+    custom_reward_function.name=compute_score \
     trainer.logger=['console'] \
     trainer.project_name="${project_name}" \
     trainer.experiment_name="${exp_name}" \
@@ -197,8 +209,8 @@ ray job submit --runtime-env="${RUNTIME_ENV}" \
     trainer.test_freq=-1 \
     trainer.save_freq=-1 \
     trainer.total_epochs=10 \
-    trainer.default_local_dir=${CKPTS_DIR} \
+    trainer.default_local_dir=$EXP_DIR \
     trainer.resume_mode=auto \
-    trainer.rollout_data_dir=${JOB_LOG_DIR_CURR}/rollout_data_dir \
-    trainer.log_val_generations=10 \
-    trainer.device="npu" $@ 2>&1
+    trainer.rollout_data_dir=$EXP_DIR/rollout \
+    trainer.device="npu" \
+    trainer.log_val_generations=10 2>&1 
