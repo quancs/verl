@@ -19,13 +19,14 @@ IPs=( # 除开master的其他节点IP
 
 # 需要同步的目录。目标目录与源目录不相同的内容会被删除
 DIRs=(
-    "/home/q00887491/models/Moonlight-16B-A3B"
+    "/home/q00887491/models/Moonlight-16B-A3B-Instruct"
+    "/home/q00887491/models/Moonlight-16B-A3B-Instruct-dist"
     "/home/q00887491/datasets/gsm8k"
     "/home/q00887491/projects/wlf_darkmatter_verl"
 )
 
 # 映射到docker内的路径
-docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B:ro -v ${DIRs[1]}:/data/datasets/gsm8k:ro -v ${DIRs[2]}:/workspace/verl -v /home/q00887491/logs:/data/logs"
+docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B-Instruct:ro -v ${DIRs[1]}:/data/models/Moonlight-16B-A3B-Instruct-dist -v ${DIRs[2]}:/data/datasets/gsm8k:ro -v ${DIRs[3]}:/workspace/verl -v /home/q00887491/logs:/data/logs"
 
 # 启动脚本在docker内的路径
 docker_cmd_file="/workspace/verl/recipe/moonlight_NPU/start.sh"
