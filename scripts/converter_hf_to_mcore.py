@@ -63,6 +63,8 @@ def _init_args():
     parser.add_argument("--test", action="store_true", help="Whether to test the conversion")
     parser.add_argument("--trust_remote_code", action="store_true", help="Whether to trust remote code")
     args = parser.parse_args()
+    from mindspeed.megatron_adaptor import repatch
+    repatch({'multi_head_latent_attention':True})
     return args
 
 
