@@ -6,6 +6,8 @@ conda activate verl_pt27_25rc2_0822daily
 ray stop --force
 rm -rf /tmp/ray
 
+pip install /workspace/verl/recipe/moonlight_NPU/pystack-1.5.1-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl
+
 export RAY_DEBUG=1  # 允许ray debug
 export RAY_DEBUG_POST_MORTEM=1
 export RAY_DEDUP_LOGS=1  # Ray 日志去重
@@ -25,21 +27,15 @@ export MASTER_ADDR=90.90.122.117
 
 # 修改为当前节点的通信网卡
 SOCKET_IFNAME="enp189s0f0"
+export HCCL_SOCKET_IFNAME=$SOCKET_IFNAME
+export TP_SOCKET_IFNAME=$SOCKET_IFNAME   # NPU？
 export GLOO_SOCKET_IFNAME=$SOCKET_IFNAME
-
-
-
-######################
-# GPU相关的环境变量
-# export NCCL_SOCKET_IFNAME=$SOCKET_IFNAME
-
-# export CUDA_DEVICE_MAX_CONNECTIONS=1   # 利于TP+SP
-######################
-
-
 
 ######################
 # NPU相关的环境变量
+
+#! 注意，0929加了这 1 个优化参数， libjemalloc 需要重新编译
+# export LD_PRELOAD="/usr/local/lib/libjemalloc.so.2"
 
 #! HCCL 相关配置
 export HCCL_EXEC_TIMEOUT=7200
@@ -50,8 +46,6 @@ export HCCL_ASYNC_ERROR_HANDLING=0
 export P2P_HCCL_BUFFSIZE=30
 export HCCL_BUFFSIZE=300
 
-export HCCL_SOCKET_IFNAME=$SOCKET_IFNAME
-export TP_SOCKET_IFNAME=$SOCKET_IFNAME   # NPU？
 
 export HCCL_ASYNC_ERROR_HANDLING=0
 export HCCL_EXEC_TIMEOUT=3600
