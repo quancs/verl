@@ -3,7 +3,7 @@ set -x
 project_name='moonlight_base_zero'
 exp_name='exp'
 
-EXP_DIR=/data/q00887491/logs/$(date +%Y%m%d_%H%M%S)
+EXP_DIR=/data/logs/$(date +%Y%m%d_%H%M%S)
 mkdir -p $EXP_DIR
 cd /workspace/verl
 
@@ -33,14 +33,14 @@ train_prompt_mini_bsz=32
 train_ppo_micro_batch_size_per_gpu=2
 infer_ppo_micro_batch_size_per_gpu=2
 # Paths
-MODEL_PATH=/data/q00887491/models/Moonlight-16B-A3B
-DIST_CKPT_PATH=/data/q00887491/models/Moonlight-16B-A3B-dist
+MODEL_PATH=/data/models/Moonlight-16B-A3B-Instruct
+DIST_CKPT_PATH=/data/models/Moonlight-16B-A3B-Instruct-dist
 
 # RAY_DATA_HOME=${RAY_DATA_HOME:-"${HOME}/verl"}
 # TRAIN_FILE=/data/q00887491/datasets/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet
 # TEST_FILE=/data/q00887491/datasets/aime-2024.parquet
-TRAIN_FILE=/data/q00887491/datasets/gsm8k/train.parquet
-TEST_FILE=/data/q00887491/datasets/gsm8k/test.parquet
+TRAIN_FILE=/data/datasets/gsm8k/train.parquet
+TEST_FILE=/data/datasets/gsm8k/test.parquet
 # TEST_FILE="['$aime24_test_path']"
 
 # Algorithm
@@ -210,6 +210,8 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}'
     +reward_model.reward_kwargs.overlong_buffer_cfg.penalty_factor=${overlong_penalty_factor} \
     +reward_model.reward_kwargs.overlong_buffer_cfg.log=False \
     +reward_model.reward_kwargs.max_resp_len=${max_response_length} \
+    custom_reward_function.path=verl/utils/reward_score/math_reward.py \
+    custom_reward_function.name=compute_score \
     trainer.logger="['console','tensorboard']" \
     trainer.project_name="${project_name}" \
     trainer.experiment_name="${exp_name}" \
