@@ -19,7 +19,7 @@ IPs=( # 除开master的其他节点IP
     # "90.90.122.117"
     # "90.90.122.181"
     # "90.90.122.120"
-    "90.90.122.182"
+    # "90.90.122.182"
 )
 
 # 需要同步的目录。目标目录与源目录不相同的内容会被删除
@@ -32,10 +32,10 @@ DIRs=(
 )
 
 # 映射到docker内的路径
-docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B-Instruct:ro -v ${DIRs[1]}:/data/models/Moonlight-16B-A3B-Instruct-dist -v ${DIRs[2]}:/data/datasets/gsm8k:ro -v ${DIRs[3]}:/workspace/verl -v ${DIRs[4]}:/root/.cache/torch_extensions -v /home/q00887491/logs:/data/logs"
+docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B-Instruct:ro -v ${DIRs[1]}:/data/models/Moonlight-16B-A3B-Instruct-dist -v ${DIRs[2]}:/data/datasets/gsm8k:ro -v ${DIRs[3]}:/workspace/verl -v ${DIRs[4]}:/root/.cache/torch_extensions -v /home/q00887491/logs:/data/logs -v /home/cann:/home/cann"
 
 # 启动脚本在docker内的路径
-docker_cmd_file="/workspace/verl/recipe/moonlight_NPU/start.sh"
+docker_cmd_file="/workspace/verl/recipe/moonlight_NPU/A3_start.sh"
 
 
 echo "#################  数据同步中  ####################"
