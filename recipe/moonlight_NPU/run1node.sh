@@ -1,11 +1,45 @@
+# docker stop test11 && docker rm test11
+# docker run --name test11 -d -itd --net=host --shm-size=500g     --privileged=true     -w /home    --device=/dev/davinci_manager    --device=/dev/hisi_hdc    --device /dev/devmm_svm    --entrypoint=bash    -v /usr/local/Ascend/driver:/usr/local/Ascend/driver:ro    -v /usr/local/dcmi:/usr/local/dcmi:ro    -v /usr/local/Ascend/firmware:/usr/local/Ascend/firmware:ro    -v /etc/ascend_install.info:/etc/ascend_install.info:ro    -v /usr/local/sbin:/usr/local/sbin:ro    -v /etc/hccn.conf:/etc/hccn.conf:ro    -v /home:/home    -v /data:/data    verl_pt27:82RC2Commercial
+# docker exec -it test11 bash
+
 set -x
+conda activate verl_pt27_25rc2_0822daily
+
+pkill -9 python
+ray stop --force
+rm -rf /tmp/ray
+
+source /home/cann/8.2.RC1.B150/ascend-toolkit/set_env.sh
+source /home/cann/8.2.RC1.B150/nnal/atb/set_env.sh
+
+export RAY_DEBUG=1  # 允许ray debug
+export RAY_DEBUG_POST_MORTEM=1
+export RAY_DEDUP_LOGS=1  # Ray 日志去重
+export HYDRA_FULL_ERROR=1
+
+
+export NNODES=1
+export NPUS_PER_NODE=8
+export GPUS_PER_NODES=$NPUS_PER_NODE
+#修改为对应主节点IP
+export MASTER_ADDR=90.90.122.117
+
+
+# 修改为当前节点的通信网卡
+SOCKET_IFNAME="enp189s0f0"
+export HCCL_SOCKET_IFNAME=$SOCKET_IFNAME
+export TP_SOCKET_IFNAME=$SOCKET_IFNAME   # NPU？
+export GLOO_SOCKET_IFNAME=$SOCKET_IFNAME
+
+export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+
 
 project_name='moonlight_base_zero'
 exp_name='exp'
 
-EXP_DIR=/data/logs/$(date +%Y%m%d_%H%M%S)
+EXP_DIR=/home/q00887491/logs/$(date +%Y%m%d_%H%M%S)
 mkdir -p $EXP_DIR
-cd /workspace/verl
+# cd /home/q00887491/projects/wlf_da/verl
 
 echo ">>Starting script at: $(date), path = $(pwd), project_name=${project_name}, exp_name=${exp_name}, exp_dir=${EXP_DIR}"
 
@@ -33,14 +67,14 @@ train_prompt_mini_bsz=32
 train_ppo_micro_batch_size_per_gpu=2
 infer_ppo_micro_batch_size_per_gpu=2
 # Paths
-MODEL_PATH=/data/models/Moonlight-16B-A3B-Instruct
-DIST_CKPT_PATH=/data/models/Moonlight-16B-A3B-Instruct-dist
+MODEL_PATH=/home/q00887491/models/Moonlight-16B-A3B-Instruct
+DIST_CKPT_PATH=/home/q00887491/models/Moonlight-16B-A3B-Instruct-dist
 
 # RAY_DATA_HOME=${RAY_DATA_HOME:-"${HOME}/verl"}
 # TRAIN_FILE=/data/q00887491/datasets/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet
 # TEST_FILE=/data/q00887491/datasets/aime-2024.parquet
-TRAIN_FILE=/data/datasets/gsm8k/train.parquet
-TEST_FILE=/data/datasets/gsm8k/test.parquet
+TRAIN_FILE=/home/q00887491/datasets/gsm8k/train.parquet
+TEST_FILE=/home/q00887491/datasets/gsm8k/test.parquet
 # TEST_FILE="['$aime24_test_path']"
 
 # Algorithm
@@ -56,15 +90,17 @@ infer_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 3))
 
 optimizer_offload_fraction=1
 
+NNODES=1
+GPUS_PER_NODES=8
 COMMON_PP=${COMMON_PP:-4}
 COMMON_VPP=${COMMON_VPP:-null}
 COMMON_CP=${COMMON_CP:-1}
 COMMON_TP=${COMMON_TP:-1}
-COMMON_EP=${COMMON_EP:-4}
+COMMON_EP=${COMMON_EP:-2}
 COMMON_ETP=${COMMON_ETP:-1}
 
 TRAIN_TP=${TRAIN_TP:-$COMMON_TP}
-INFER_TP=${INFER_TP:-8}
+INFER_TP=${INFER_TP:-4}
 INFER_EP=2
 
 ACTOR_PP=${ACTOR_PP:-$COMMON_PP}
@@ -103,13 +139,16 @@ USE_DIST_CKPT=True
 # last_layer=7
 # pipeline_num_transformer_layers="[[6],[8],[8],[8],[8],[8],[8],[7]]"
 
-first_layer=7
-last_layer=6
+first_layer=3
+last_layer=3
 # pipeline_num_transformer_layers="[[3],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[2]]"
-ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/","/models/","/logs/"]}' \
-    -- python3 -m recipe.dapo.main_dapo \
+python3 -m recipe.dapo.main_dapo \
     --config-path=config \
     --config-name="dapo_megatron_trainer" \
+    +ray_kwargs.ray_init.address='local' \
+    +ray_kwargs.ray_init.dashboard_host="0.0.0.0" \
+    +ray_kwargs.ray_init.dashboard_port=4919 \
+    +actor_rollout_ref.model.override_config.model_config.num_hidden_layers=12 \
     hydra.run.dir=$EXP_DIR \
     data.train_files="${TRAIN_FILE}" \
     data.val_files="${TEST_FILE}" \
@@ -158,12 +197,6 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/","/
     actor_rollout_ref.actor.megatron.expert_tensor_parallel_size=${ACTOR_ETP} \
     +actor_rollout_ref.actor.megatron.override_transformer_config.use_flash_attn=True \
     +actor_rollout_ref.actor.megatron.override_transformer_config.multi_head_latent_attention=True \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.kv_lora_rank=512 \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.v_head_dim=128 \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.qk_rope_head_dim=64 \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.qk_nope_head_dim=128 \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.reset_position_ids=True \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.attention_mask_type='causal' \
     +actor_rollout_ref.actor.megatron.override_transformer_config.seq_length=2048 \
     +actor_rollout_ref.actor.megatron.override_transformer_config.recompute_method=uniform \
     +actor_rollout_ref.actor.megatron.override_transformer_config.recompute_granularity=full \
@@ -219,60 +252,4 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/","/
     trainer.resume_mode=auto \
     trainer.rollout_data_dir=$EXP_DIR/rollout \
     trainer.log_val_generations=10 \
-    trainer.device="npu" $@ 2>&1 | tee $EXP_DIR/run.log
-
-
-# 去除的参数
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.apply_rope_fusion=False \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.masked_softmax_fusion=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.bias_activation_fusion=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.bias_dropout_fusion=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.gradient_accumulation_fusion=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.deallocate_pipeline_outputs=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.persist_layer_norm=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_grouped_gemm=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_permute_fusion=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_shared_expert_overlap=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_token_dispatcher_type="alltoall" \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_router_dtype=fp32 \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_enable_deepep=False \
-
-
-    # +actor_rollout_ref.actor.optim.override_optimizer_config.overlap_cpu_optimizer_d2h_h2d=True \
-    # +actor_rollout_ref.actor.optim.override_optimizer_config.use_precision_aware_optimizer=True \
-    # +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_cpu_offload=True \
-    # actor_rollout_ref.rollout.load_format=dummy \
-# 
-
-
-
-    # actor_rollout_ref.rollout.skip_rollout=True \
-    # actor_rollout_ref.rollout.skip_dump_dir="/tmp/rollout_dump" \
-
-
-    # +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_offload_fraction=${optimizer_offload_fraction} \   # 141-144：可能跑不通
-    # +actor_rollout_ref.actor.optim.override_optimizer_config.overlap_cpu_optimizer_d2h_h2d=True \
-    # +actor_rollout_ref.actor.optim.override_optimizer_config.use_precision_aware_optimizer=True \  # 特别关注
-    # +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_cpu_offload=True \
-
-
-    # ++actor_rollout_ref.actor.megatron.override_transformer_config.attention_backend=fused \    # 作用？
-
-
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.apply_rope_fusion=False \      # 159-170：现场关掉了，哪些能用？叶朕源
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.masked_softmax_fusion=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.bias_activation_fusion=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.bias_dropout_fusion=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.gradient_accumulation_fusion=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.deallocate_pipeline_outputs=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.persist_layer_norm=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_grouped_gemm=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_permute_fusion=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_shared_expert_overlap=True \
-    # +actor_rollout_ref.actor.megatron.override_transformer_config.moe_token_dispatcher_type="alltoall" \
-
-
-    # actor_rollout_ref.rollout.load_format=dummy \  # safetensor?dummy不支持？
-
-# USE_MBRIDGE=True   # 困难：周洋
-
+    trainer.device="npu"

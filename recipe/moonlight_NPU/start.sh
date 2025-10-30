@@ -38,26 +38,17 @@ export GLOO_SOCKET_IFNAME=$SOCKET_IFNAME
 # export LD_PRELOAD="/usr/local/lib/libjemalloc.so.2"
 
 #! HCCL 相关配置
-export HCCL_EXEC_TIMEOUT=7200
-export HCCL_EVENT_TIMEOUT=7200
-export HCCL_CONNECT_TIMEOUT=7200
-export ACL_DEVICE_SYNC_TIMEOUT=7200
-export HCCL_ASYNC_ERROR_HANDLING=0
-export P2P_HCCL_BUFFSIZE=30
 export HCCL_BUFFSIZE=300
-
-
-export HCCL_ASYNC_ERROR_HANDLING=0
-export HCCL_EXEC_TIMEOUT=3600
-export HCCL_CONNECT_TIMEOUT=3600
 export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+export HCCL_CONNECT_TIMEOUT=600
 
-
-export PYTORCH_NPU_ALLOC_CONF="max_split_size_mb:2048"
-export ASCEND_GLOBAL_LOG_LEVEL=3 # 3：error级？0：debug级？
+# PLOG相关的内容：
+# export ASCEND_LAUNCH_BLOCKING=0
+# export ASCEND_GLOBAL_LOG_LEVEL=3 # 3：error级？0：debug级？
+# export ASCEND_PROCESS_LOG_PATH=/data/logs/plog
 
 #TASK_QUEUE_ENABLE，下发优化，图模式设置为1，非图模式设置为2。NPU参数？哪个包
-export TASK_QUEUE_ENABLE=2
+# export TASK_QUEUE_ENABLE=0
 
 # 激活cann
 source /usr/local/Ascend/cann/8.2.RC2.B030/ascend-toolkit/set_env.sh

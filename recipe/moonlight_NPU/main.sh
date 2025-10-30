@@ -5,7 +5,7 @@
 ####################################################
 # 本脚本需要提前配置好ssh免密登录，即将master的公钥传到目标服务器，指令示例如下：
 # ssh-keygen
-# ssh-copy-id root@90.90.122.120
+# ssh-copy-id -i /root/.ssh/id_rsa.pub root@90.90.122.182
 ####################################################
 # 脚本执行方式：
 # chmod +x main.sh
@@ -14,7 +14,9 @@
 
 IPs=( # 除开master的其他节点IP
     # "90.90.122.117"
-    "90.90.122.120"
+    # "90.90.122.181"
+    # "90.90.122.120"
+    "90.90.122.182"
 )
 
 # 需要同步的目录。目标目录与源目录不相同的内容会被删除
@@ -23,10 +25,11 @@ DIRs=(
     "/home/q00887491/models/Moonlight-16B-A3B-Instruct-dist"
     "/home/q00887491/datasets/gsm8k"
     "/home/q00887491/projects/wlf_darkmatter_verl"
+    "/home/q00887491/logs/.cache/torch_extensions"
 )
 
 # 映射到docker内的路径
-docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B-Instruct:ro -v ${DIRs[1]}:/data/models/Moonlight-16B-A3B-Instruct-dist -v ${DIRs[2]}:/data/datasets/gsm8k:ro -v ${DIRs[3]}:/workspace/verl -v /home/q00887491/logs:/data/logs"
+docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B-Instruct:ro -v ${DIRs[1]}:/data/models/Moonlight-16B-A3B-Instruct-dist -v ${DIRs[2]}:/data/datasets/gsm8k:ro -v ${DIRs[3]}:/workspace/verl -v ${DIRs[4]}:/root/.cache/torch_extensions -v /home/q00887491/logs:/data/logs"
 
 # 启动脚本在docker内的路径
 docker_cmd_file="/workspace/verl/recipe/moonlight_NPU/start.sh"
@@ -75,18 +78,20 @@ DOCKER_RUN_CMD="docker exec ${CONTAINER_NAME} bash ${docker_cmd_file}"
 echo -e "$DOCKER_START_CMD"
 echo -e "$DOCKER_RUN_CMD"
 
+echo -e "\nstart process on Master Node"
+eval "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME"
+eval $DOCKER_START_CMD
+eval $DOCKER_RUN_CMD &
+sleep 10
+
 index=0
 for ip in ${IPs[*]}; do
     echo -e "\nstart process on Node $index $ip"
     ssh root@$ip "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME; $DOCKER_START_CMD; $DOCKER_RUN_CMD; exit" & # +“&”后，后台起另外一个线程运行
+    ssh root@$ip "$DOCKER_RUN_CMD; exit" & # +“&”后，后台起另外一个线程运行
     ((index++))  # 索引自增
     echo "################################################"
 done
-
-echo -e "\nstart process on Master Node"
-eval "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME"
-eval $DOCKER_START_CMD
-eval $DOCKER_RUN_CMD
 
 # 等待后台任务完成
 wait
