@@ -3,11 +3,9 @@ set -x
 project_name='moonlight_base_zero'
 exp_name='exp'
 
-EXP_DIR=/data/logs/$(date +%Y%m%d_%H%M%S)
-mkdir -p $EXP_DIR
 cd /workspace/verl
 
-echo ">>Starting script at: $(date), path = $(pwd), project_name=${project_name}, exp_name=${exp_name}, exp_dir=${EXP_DIR}"
+echo ">>Starting script at: $(date), path = $(pwd), project_name=${project_name}, exp_name=${exp_name}, log_dir=${JOB_LOG_DIR_CURR}"
 
 adv_estimator=grpo
 
@@ -35,8 +33,8 @@ infer_ppo_micro_batch_size_per_gpu=2
 # Paths
 MODEL_PATH=/data/models/Moonlight-16B-A3B
 DIST_CKPT_PATH=/data/models/Moonlight-16B-A3B-dist
-cp "${MODEL_PATH}/config.json" "${EXP_DIR}/."
-cp "${MODEL_PATH}/tokenizer_config.json" "${EXP_DIR}/."
+cp "${MODEL_PATH}/config.json" "${JOB_LOG_DIR_CURR}/."
+cp "${MODEL_PATH}/tokenizer_config.json" "${JOB_LOG_DIR_CURR}/."
 
 # RAY_DATA_HOME=${RAY_DATA_HOME:-"${HOME}/verl"}
 TRAIN_FILE=/data/datasets/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet
@@ -224,10 +222,10 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/","/
     trainer.test_freq=-1 \
     trainer.save_freq=-1 \
     trainer.total_epochs=10 \
-    trainer.default_local_dir=$EXP_DIR \
+    trainer.default_local_dir=$JOB_LOG_DIR_CURR \
     trainer.resume_mode=auto \
-    trainer.rollout_data_dir=$EXP_DIR/rollout \
-    trainer.log_val_generations=10 2>&1 | tee $EXP_DIR/run.log
+    trainer.rollout_data_dir=$JOB_LOG_DIR_CURR/rollout \
+    trainer.log_val_generations=10 2>&1 | tee $JOB_LOG_DIR_CURR/run.log
 
 
 

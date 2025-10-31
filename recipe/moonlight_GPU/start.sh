@@ -63,6 +63,11 @@ export TASK_QUEUE_ENABLE=2
 
 # 加入source CANN相关的内容
 
+#################### Log 目录配置 ###########################
+# * 确保 JOB_LOG_DIR 在共享盘下
+export JOB_LOG_DIR=/data/logs
+export JOB_LOG_DIR_CURR=${JOB_LOG_DIR}/$(date +"%Y%m%d_%H%M%S")
+
 ######################
 
 
@@ -70,8 +75,13 @@ export TASK_QUEUE_ENABLE=2
 CURRENT_IP=$(ifconfig $SOCKET_IFNAME | grep -Eo 'inet (addr:)?([0-9]{1,3}\.){3}[0-9]{1,3}' | awk '{print $NF}')
 echo $CURRENT_IP
 if [ "$MASTER_ADDR" = "$CURRENT_IP" ]; then
+  mkdir -p $JOB_LOG_DIR_CURR
+  cp $(dirname $0)/start.sh "${JOB_LOG_DIR_CURR}/."
+  cp $(dirname $0)/main.sh "${JOB_LOG_DIR_CURR}/."
+  cp $(dirname $0)/run.sh "${JOB_LOG_DIR_CURR}/."
+
   # 主节点启动
-  ray start --head --port 4918 --dashboard-host=$MASTER_ADDR --node-ip-address=$CURRENT_IP --dashboard-port=4919
+  ray start --head --port 4918 --dashboard-host="0.0.0.0" --node-ip-address=$CURRENT_IP --dashboard-port=4919 --disable-usage-stats
 
   while true; do
       ray_status_output=$(ray status)
