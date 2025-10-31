@@ -3,7 +3,7 @@ set -x
 project_name='moonlight_base_zero'
 exp_name='exp'
 
-EXP_DIR=/data/q00887491/logs/$(date +%Y%m%d_%H%M%S)
+EXP_DIR=/data/logs/$(date +%Y%m%d_%H%M%S)
 mkdir -p $EXP_DIR
 cd /workspace/verl
 
@@ -20,8 +20,8 @@ kl_loss_coef=0.001
 
 clip_ratio_low=0.2
 clip_ratio_high=0.28
-max_prompt_length=$((1024 * 2))
-max_response_length=$((1024 * 4))
+max_prompt_length=$((1024 * 1))
+max_response_length=$((1024 * 2))
 enable_overlong_buffer=True
 overlong_buffer_len=$((1024 * 1))
 overlong_penalty_factor=1.0
@@ -33,14 +33,14 @@ train_prompt_mini_bsz=32
 train_ppo_micro_batch_size_per_gpu=2
 infer_ppo_micro_batch_size_per_gpu=2
 # Paths
-MODEL_PATH=/data/q00887491/models/Moonlight-16B-A3B
-DIST_CKPT_PATH=/data/q00887491/models/Moonlight-16B-A3B-dist
+MODEL_PATH=/data/models/Moonlight-16B-A3B
+DIST_CKPT_PATH=/data/models/Moonlight-16B-A3B-dist
 
 # RAY_DATA_HOME=${RAY_DATA_HOME:-"${HOME}/verl"}
-# TRAIN_FILE=/data/q00887491/datasets/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet
-# TEST_FILE=/data/q00887491/datasets/aime-2024.parquet
-TRAIN_FILE=/data/q00887491/datasets/gsm8k/train.parquet
-TEST_FILE=/data/q00887491/datasets/gsm8k/test.parquet
+TRAIN_FILE=/data/datasets/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet
+TEST_FILE=/data/datasets/aime-2024.parquet
+# TRAIN_FILE=/data/datasets/gsm8k/train.parquet
+# TEST_FILE=/data/datasets/gsm8k/test.parquet
 # TEST_FILE="['$aime24_test_path']"
 
 # Algorithm
@@ -105,14 +105,14 @@ USE_DIST_CKPT=False
 first_layer=14
 last_layer=13
 # pipeline_num_transformer_layers="[[3],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[2]]"
-ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}' \
+ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/","/models/","/logs/"]}' \
     -- python3 -m recipe.dapo.main_dapo \
     --config-path=config \
     --config-name="dapo_megatron_trainer" \
     actor_rollout_ref.nccl_timeout=7200 \
     data.train_files="${TRAIN_FILE}" \
     data.val_files="${TEST_FILE}" \
-    data.prompt_key=prompt \
+    data.prompt_key=messages \
     data.truncation='left' \
     data.max_prompt_length=${max_prompt_length} \
     data.max_response_length=${max_response_length} \
@@ -210,6 +210,8 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/"]}'
     +reward_model.reward_kwargs.overlong_buffer_cfg.penalty_factor=${overlong_penalty_factor} \
     +reward_model.reward_kwargs.overlong_buffer_cfg.log=False \
     +reward_model.reward_kwargs.max_resp_len=${max_response_length} \
+    custom_reward_function.path=verl/utils/reward_score/math_reward.py \
+    custom_reward_function.name=compute_score \
     trainer.logger="['console','tensorboard']" \
     trainer.project_name="${project_name}" \
     trainer.experiment_name="${exp_name}" \
