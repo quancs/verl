@@ -35,6 +35,8 @@ infer_ppo_micro_batch_size_per_gpu=2
 # Paths
 MODEL_PATH=/data/models/Moonlight-16B-A3B
 DIST_CKPT_PATH=/data/models/Moonlight-16B-A3B-dist
+cp "${MODEL_PATH}/config.json" "${EXP_DIR}/."
+cp "${MODEL_PATH}/tokenizer_config.json" "${EXP_DIR}/."
 
 # RAY_DATA_HOME=${RAY_DATA_HOME:-"${HOME}/verl"}
 TRAIN_FILE=/data/datasets/dapo-math-17k_dedup_r1_sys_prompt_mathdapo.parquet
