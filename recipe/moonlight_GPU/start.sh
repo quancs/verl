@@ -13,7 +13,7 @@ echo "Use $DEFAULT_SH"
 
 ulimit -n 32768
 
-export NNODES=2
+export NNODES=1
 export NPUS_PER_NODE=8
 export GPUS_PER_NODES=$NPUS_PER_NODE
 #修改为对应主节点IP

@@ -25,9 +25,9 @@ overlong_buffer_len=$((1024 * 1))
 overlong_penalty_factor=1.0
 
 loss_agg_mode="token-mean"
-train_prompt_bsz=32
+train_prompt_bsz=16
 n_resp_per_prompt=16
-train_prompt_mini_bsz=32
+train_prompt_mini_bsz=16
 train_ppo_micro_batch_size_per_gpu=2
 infer_ppo_micro_batch_size_per_gpu=2
 # Paths
@@ -56,12 +56,12 @@ infer_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 3))
 
 optimizer_offload_fraction=1
 
-COMMON_PP=${COMMON_PP:-2}
+COMMON_PP=${COMMON_PP:-1}
 COMMON_VPP=${COMMON_VPP:-null}
 COMMON_CP=${COMMON_CP:-1}
 COMMON_TP=${COMMON_TP:-8}
-COMMON_EP=${COMMON_EP:-8}
-COMMON_ETP=${COMMON_ETP:-1}
+COMMON_EP=${COMMON_EP:-1}
+COMMON_ETP=${COMMON_ETP:-8}
 
 TRAIN_TP=${TRAIN_TP:-$COMMON_TP}
 INFER_TP=${INFER_TP:-8}
@@ -102,10 +102,12 @@ USE_DIST_CKPT=False
 # last_layer=7
 # pipeline_num_transformer_layers="[[6],[8],[8],[8],[8],[8],[8],[7]]"
 
-first_layer=14
-last_layer=13
+first_layer=7
+last_layer=6
+# first_layer=14
+# last_layer=13
 # pipeline_num_transformer_layers="[[3],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[2]]"
-ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/","/models/","/logs/"]}' \
+ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/","/models_ckpts/","/logs/"]}' \
     -- python3 -m recipe.dapo.main_dapo \
     --config-path=config \
     --config-name="dapo_megatron_trainer" \

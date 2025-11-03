@@ -14,7 +14,7 @@
 
 IPs=( # 除开master的其他节点IP
     # "90.90.122.117"
-    "90.91.103.33"
+    # "90.91.103.33"
 )
 
 # 需要同步的目录。目标目录与源目录不相同的内容会被删除
@@ -24,6 +24,7 @@ DIRs=(
     # "/home/q00887491/models/Moonlight-16B-A3B-Instruct-dist-pp4"
     "/data/q00887491/datasets"
     "/data/q00887491/projects/wlf_darkmatter_verl"
+    "/data/q00887491/logs/fsdp-dump"
 )
 
 # 映射到docker内的路径
@@ -51,6 +52,7 @@ for ip in ${IPs[*]}; do
     ((index++))  # 索引自增
     echo -r "\n\n"
 done
+sleep 10
 echo "#################  数据同步结束  ####################"
 
 echo "#################  训练启动中  ####################"
@@ -76,15 +78,17 @@ echo -e "$DOCKER_START_CMD"
 echo -e "$DOCKER_RUN_CMD"
 
 echo -e "\nstart process on Master Node"
-eval "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME"
-eval $DOCKER_START_CMD
+eval "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME" # 停止+删除容器
+eval $DOCKER_START_CMD # 创建容器
 eval $DOCKER_RUN_CMD &
 sleep 10
 
 index=0
 for ip in ${IPs[*]}; do
     echo -e "\nstart process on Node $index $ip"
-    ssh $user_used@$ip "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME; $DOCKER_START_CMD; $DOCKER_RUN_CMD; exit" & # +“&”后，后台起另外一个线程运行
+    ssh $user_used@$ip "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME" # 停止+删除容器
+    ssh $user_used@$ip "$DOCKER_START_CMD" # 创建容器
+    ssh $user_used@$ip "$DOCKER_RUN_CMD; exit" & # +“&”后，后台起另外一个线程运行
     ((index++))  # 索引自增
     echo "################################################"
 done
