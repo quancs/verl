@@ -42,7 +42,7 @@ pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/lxml-6.0.2-cp310-
 
 # 机器环境变量
 export NNODES=1
-export NPUS_PER_NODE=16
+export NPUS_PER_NODE=8
 export GPUS_PER_NODES=$NPUS_PER_NODE
 
 # Debug相关的环境变量
@@ -117,7 +117,7 @@ if [ "$MASTER_ADDR" = "$CURRENT_IP" ]; then
       device_count=$((npu_count_int / $NPUS_PER_NODE))
 
       # 判断 device_count 是否与 NNODES 相等
-      if [ "$device_count" -eq "$NNODES" ]; then
+      if [ "$device_count" -ge "$NNODES" ]; then
           echo "Ray cluster is ready with $device_count devices (from $npu_count NPU/GPU resources), starting Python script."
           ray status
           bash $DEFAULT_SH

@@ -18,16 +18,16 @@ kl_loss_coef=0.001
 
 clip_ratio_low=0.2
 clip_ratio_high=0.28
-max_prompt_length=$((1024 * 2))
+max_prompt_length=$((1024 * 1))
 max_response_length=$((1024 * 2))
 enable_overlong_buffer=True
 overlong_buffer_len=$((1024 * 1))
 overlong_penalty_factor=1.0
 
 loss_agg_mode="token-mean"
-train_prompt_bsz=32
+train_prompt_bsz=16
 n_resp_per_prompt=16
-train_prompt_mini_bsz=32
+train_prompt_mini_bsz=16
 train_ppo_micro_batch_size_per_gpu=2
 infer_ppo_micro_batch_size_per_gpu=2
 # Paths
@@ -56,12 +56,12 @@ infer_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 3))
 
 optimizer_offload_fraction=1
 
-COMMON_PP=${COMMON_PP:-4}
+COMMON_PP=${COMMON_PP:-1}
 COMMON_VPP=${COMMON_VPP:-null}
 COMMON_CP=${COMMON_CP:-1}
-COMMON_TP=${COMMON_TP:-4}
-COMMON_EP=${COMMON_EP:-4}
-COMMON_ETP=${COMMON_ETP:-1}
+COMMON_TP=${COMMON_TP:-8}
+COMMON_EP=${COMMON_EP:-1}
+COMMON_ETP=${COMMON_ETP:-8}
 
 TRAIN_TP=${TRAIN_TP:-$COMMON_TP}
 INFER_TP=${INFER_TP:-8}
@@ -105,6 +105,8 @@ USE_DIST_CKPT=False
 
 first_layer=7
 last_layer=6
+# first_layer=14
+# last_layer=13
 # pipeline_num_transformer_layers="[[3],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[2]]"
 cd /opt/verl
 ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/", "/models/", "/logs/", "/k8s", "/docker", "/doc", "/tmp", "/kernel_meta", "/plog"], "env_vars": {"VLLM_USE_V1": "1"}}' \
@@ -170,7 +172,7 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/", "
     actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu=${infer_ppo_max_token_len} \
     actor_rollout_ref.rollout.gpu_memory_utilization=0.65 \
     actor_rollout_ref.rollout.tensor_model_parallel_size=${INFER_TP} \
-    actor_rollout_ref.rollout.data_parallel_size=2 \
+    actor_rollout_ref.rollout.data_parallel_size=1 \
     actor_rollout_ref.rollout.enable_chunked_prefill=False \
     actor_rollout_ref.rollout.max_num_batched_tokens=$((max_prompt_length + max_response_length)) \
     actor_rollout_ref.rollout.temperature=${temperature} \
