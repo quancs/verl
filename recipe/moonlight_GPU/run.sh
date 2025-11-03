@@ -102,8 +102,8 @@ USE_DIST_CKPT=False
 # last_layer=7
 # pipeline_num_transformer_layers="[[6],[8],[8],[8],[8],[8],[8],[7]]"
 
-first_layer=7
-last_layer=6
+first_layer=None
+last_layer=None
 # first_layer=14
 # last_layer=13
 # pipeline_num_transformer_layers="[[3],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[4],[2]]"
@@ -140,8 +140,6 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/","/
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=${train_ppo_micro_batch_size_per_gpu} \
     actor_rollout_ref.actor.ppo_max_token_len_per_gpu=${actor_ppo_max_token_len} \
     actor_rollout_ref.actor.optim.lr=3e-6 \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_first_pipeline_stage=$first_layer \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_last_pipeline_stage=$last_layer \
     +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_offload_fraction=${optimizer_offload_fraction} \
     +actor_rollout_ref.actor.optim.override_optimizer_config.overlap_cpu_optimizer_d2h_h2d=True \
     +actor_rollout_ref.actor.optim.override_optimizer_config.use_precision_aware_optimizer=True \
@@ -230,6 +228,8 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/","/
     trainer.log_val_generations=10 2>&1 | tee $JOB_LOG_DIR_CURR/run.log
 
 
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_first_pipeline_stage=$first_layer \
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_last_pipeline_stage=$last_layer \
 
     # +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_offload_fraction=${optimizer_offload_fraction} \   # 141-144：可能跑不通
     # +actor_rollout_ref.actor.optim.override_optimizer_config.overlap_cpu_optimizer_d2h_h2d=True \
