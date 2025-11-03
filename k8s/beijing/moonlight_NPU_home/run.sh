@@ -145,8 +145,6 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/", "
     +actor_rollout_ref.actor.megatron.override_transformer_config.tensor_model_parallel_size=${ACTOR_TP} \
     +actor_rollout_ref.actor.megatron.override_transformer_config.multi_latent_attention=True \
     +actor_rollout_ref.actor.megatron.override_transformer_config.use_flash_attn=True \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_first_pipeline_stage=$first_layer \
-    +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_last_pipeline_stage=$last_layer \
     +actor_rollout_ref.actor.optim.override_optimizer_config.optimizer_offload_fraction=${optimizer_offload_fraction} \
     actor_rollout_ref.actor.megatron.param_offload=True \
     actor_rollout_ref.actor.megatron.optimizer_offload=True \
@@ -223,6 +221,9 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/", "
 
 
 # 去除的参数
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_first_pipeline_stage=$first_layer \
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_last_pipeline_stage=$last_layer \
+
     # +actor_rollout_ref.actor.megatron.override_transformer_config.apply_rope_fusion=False \
     # +actor_rollout_ref.actor.megatron.override_transformer_config.masked_softmax_fusion=True \
     # +actor_rollout_ref.actor.megatron.override_transformer_config.bias_activation_fusion=True \
