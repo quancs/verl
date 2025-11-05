@@ -1,3 +1,7 @@
+docker/pkg
+*.whl
+model_ckpts
+logs
 
 **/*.pt
 **/checkpoints
