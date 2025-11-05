@@ -35,7 +35,7 @@ DIRs=(
 docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B:ro -v ${DIRs[1]}:/data/datasets:ro -v ${DIRs[2]}:/home/code/verl-gpu:ro -v ${DIRs[3]}:/root/.cache/torch_extensions -v /home/q00887491/logs:/data/logs -v /home/cann:/home/cann:ro"
 
 # 启动脚本在docker内的路径
-docker_cmd_file="/home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/start.sh"
+docker_cmd_file="/home/code/verl-gpu/k8s/beijing/moonlight_NPU_home_2J/start.sh"
 
 
 echo "#################  数据同步中  ####################"

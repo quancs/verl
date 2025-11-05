@@ -1,11 +1,11 @@
 #################### 网络配置 ###########################
 #修改为对应主节点IP
-# export MASTER_ADDR=90.90.122.117
-export MASTER_ADDR=90.90.97.77
+export MASTER_ADDR=90.90.122.117
+# export MASTER_ADDR=90.90.97.77
 
 # 修改为当前节点的通信网卡
-# SOCKET_IFNAME="enp189s0f0"
-SOCKET_IFNAME="enp194s0f0"
+SOCKET_IFNAME="enp189s0f0"
+# SOCKET_IFNAME="enp194s0f0"
 export HCCL_SOCKET_IFNAME=$SOCKET_IFNAME
 export TP_SOCKET_IFNAME=$SOCKET_IFNAME   # NPU？
 export GLOO_SOCKET_IFNAME=$SOCKET_IFNAME
@@ -18,7 +18,7 @@ export JOB_LOG_DIR_CURR=${JOB_LOG_DIR}/$(date +"%Y%m%d_%H%M%S")
 export ASCEND_PROCESS_LOG_PATH=${JOB_LOG_DIR_CURR}/plog/${CURRENT_IP}
 
 ####################   环境设置    #######################
-DEFAULT_SH="/home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/run.sh"
+DEFAULT_SH="/home/code/verl-gpu/k8s/beijing/moonlight_NPU_home_2J/run.sh"
 
 pkill -9 python
 
