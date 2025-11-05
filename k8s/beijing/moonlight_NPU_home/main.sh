@@ -25,14 +25,14 @@ IPs=( # 除开master的其他节点IP
 # 需要同步的目录。目标目录与源目录不相同的内容会被删除
 DIRs=(
     "/home/q00887491/models/Moonlight-16B-A3B"
-    "/home/q00887491/models/Moonlight-16B-A3B-dist"
+    # "/home/q00887491/models/Moonlight-16B-A3B-dist"
     "/home/q00887491/datasets"
     "/home/q00887491/projects/wlf_darkmatter_verl"
     "/home/q00887491/logs/.cache/torch_extensions"
 )
 
 # 映射到docker内的路径
-docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B:ro -v ${DIRs[1]}:/data/models/Moonlight-16B-A3B-dist:ro -v ${DIRs[2]}:/data/datasets:ro -v ${DIRs[3]}:/home/code/verl-gpu:ro -v ${DIRs[4]}:/root/.cache/torch_extensions -v /home/q00887491/logs:/data/logs -v /home/cann:/home/cann:ro"
+docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B:ro -v ${DIRs[1]}:/data/datasets:ro -v ${DIRs[2]}:/home/code/verl-gpu:ro -v ${DIRs[3]}:/root/.cache/torch_extensions -v /home/q00887491/logs:/data/logs -v /home/cann:/home/cann:ro"
 
 # 启动脚本在docker内的路径
 docker_cmd_file="/home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/start.sh"

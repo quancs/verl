@@ -28,8 +28,10 @@ LIB_PATH=/opt/python3.10/lib/
 export LD_LIBRARY_PATH=$LIB_PATH:$LD_LIBRARY_PATH:/home/code/verl-gpu/docker/pkg/
 
 # Cann环境
-source /usr/local/Ascend/ascend-toolkit/set_env.sh;
-source /usr/local/Ascend/nnal/atb/set_env.sh;
+# source /usr/local/Ascend/ascend-toolkit/set_env.sh;
+# source /usr/local/Ascend/nnal/atb/set_env.sh;
+source /home/cann/8.2.RC2.B030/ascend-toolkit/set_env.sh;
+source /home/cann/8.2.RC2.B030/nnal/atb/set_env.sh;
 
 # ray重启
 ray stop --force
