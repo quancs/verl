@@ -82,7 +82,8 @@ echo -e "$DOCKER_START_CMD"
 echo -e "$DOCKER_RUN_CMD"
 
 echo -e "\nstart process on Master Node"
-eval "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME"
+docker stop $CONTAINER_NAME
+docker rm $CONTAINER_NAME
 eval $DOCKER_START_CMD
 eval $DOCKER_RUN_CMD &
 sleep 10
@@ -90,7 +91,8 @@ sleep 10
 index=0
 for ip in ${IPs[*]}; do
     echo -e "\nstart process on Node $index $ip"
-    ssh root@$ip "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME; $DOCKER_START_CMD; $DOCKER_RUN_CMD; exit" & # +“&”后，后台起另外一个线程运行
+    ssh root@$ip "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME" # 停止+删除容器
+    ssh root@$ip "$DOCKER_START_CMD" # 创建容器
     ssh root@$ip "$DOCKER_RUN_CMD; exit" & # +“&”后，后台起另外一个线程运行
     ((index++))  # 索引自增
     echo "################################################"
