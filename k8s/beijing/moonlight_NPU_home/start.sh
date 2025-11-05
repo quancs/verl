@@ -39,6 +39,7 @@ rm -rf /tmp/ray
 # pip install /opt/verl/recipe/moonlight_NPU/pystack-1.5.1-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl
 pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/blobfile-3.1.0-py3-none-any.whl --no-deps
 pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/lxml-6.0.2-cp310-cp310-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl --no-deps
+pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/tensordict-0.10.0-cp310-cp310-manylinux_2_28_aarch64.whl --no-deps
 
 # 机器环境变量
 export NNODES=2
@@ -97,6 +98,9 @@ echo "Overwrite verl code, done."
 rm -f /opt/verl/.gitignore
 cd $(dirname $0)
 
+# 删除lock，防止卡住
+rm -f /root/.cache/torch_extensions/py310_cpu/grouped_matmul/lock
+
 #######################################
 # 获取当前节点IP
 echo $CURRENT_IP
@@ -117,7 +121,7 @@ if [ "$MASTER_ADDR" = "$CURRENT_IP" ]; then
       device_count=$((npu_count_int / $NPUS_PER_NODE))
 
       # 判断 device_count 是否与 NNODES 相等
-      if [ "$device_count" -eq "$NNODES" ]; then
+      if [ "$device_count" -ge "$NNODES" ]; then
           echo "Ray cluster is ready with $device_count devices (from $npu_count NPU/GPU resources), starting Python script."
           ray status
           bash $DEFAULT_SH
