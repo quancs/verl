@@ -940,6 +940,21 @@ class DataProto:
         for key, val in non_tensor_batch.items():
             non_tensor_batch[key] = np.concatenate(val, axis=0)
 
+        def meta_info_equal(a, b):
+            if type(a) != dict or type(b) != dict:
+                return a == b
+            if set(a.keys()) != set(b.keys()):
+                return False
+            for key in a:
+                if key == 'generate_sequences':
+                    # generate_sequences in different meta_info may be slightly different, ignore it
+                    if round(a[key]) != round(b[key]):
+                        return False
+                else:
+                    if a[key] != b[key]:
+                        return False
+            return True
+
         # Merge meta_info with special handling for metrics
         merged_meta_info = {}
         if data:
@@ -956,7 +971,7 @@ class DataProto:
                     else:
                         if k in merged_meta_info:
                             # Ensure consistency for overlapping non-metric keys
-                            assert merged_meta_info[k] == v, f"Conflicting values for meta_info key '{k}'"
+                            assert meta_info_equal(merged_meta_info[k], v), f"Conflicting values for meta_info key '{k}'"
                         else:
                             merged_meta_info[k] = v
 
