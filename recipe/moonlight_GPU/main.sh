@@ -19,18 +19,18 @@ IPs=( # 除开master的其他节点IP
 
 # 需要同步的目录。目标目录与源目录不相同的内容会被删除
 DIRs=(
-    "/data/q00887491/models/Moonlight-16B-A3B"
+    "/data1/q00887491/models/Moonlight-16B-A3B"
     # "/data/q00887491/models/Moonlight-16B-A3B-Instruct"
     # "/home/q00887491/models/Moonlight-16B-A3B-Instruct-dist-pp4"
-    "/data/q00887491/datasets"
-    "/data/q00887491/projects/wlf_darkmatter_verl"
-    "/data/q00887491/logs/fsdp-dump"
+    "/data1/q00887491/datasets"
+    "/data1/q00887491/projects/wlf_darkmatter_verl"
+    "/data1/q00887491/logs/fsdp-dump"
 )
 
 # 映射到docker内的路径
 # docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B-Instruct:ro -v ${DIRs[1]}:/data/models/Moonlight-16B-A3B-Instruct-dist -v ${DIRs[2]}:/data/datasets/gsm8k:ro -v ${DIRs[3]}:/workspace/verl -v /home/q00887491/logs:/data/logs"
 
-docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B:ro -v ${DIRs[1]}:/data/datasets:ro -v ${DIRs[2]}:/workspace/verl -v /data/q00887491/logs:/data/logs"
+docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B:ro -v ${DIRs[1]}:/data/datasets:ro -v ${DIRs[2]}:/workspace/verl -v /data1/q00887491/logs:/data/logs"
 user_used=q00887491
 
 # 启动脚本在docker内的路径
@@ -52,7 +52,7 @@ for ip in ${IPs[*]}; do
     ((index++))  # 索引自增
     echo -r "\n\n"
 done
-sleep 10
+sleep 1
 echo "#################  数据同步结束  ####################"
 
 echo "#################  训练启动中  ####################"
@@ -78,16 +78,16 @@ echo -e "$DOCKER_START_CMD"
 echo -e "$DOCKER_RUN_CMD"
 
 echo -e "\nstart process on Master Node"
-eval "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME" # 停止+删除容器
-eval $DOCKER_START_CMD # 创建容器
+# docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME # 停止+删除容器
+# eval $DOCKER_START_CMD # 创建容器
 eval $DOCKER_RUN_CMD &
-sleep 10
+sleep 1
 
 index=0
 for ip in ${IPs[*]}; do
     echo -e "\nstart process on Node $index $ip"
-    ssh $user_used@$ip "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME" # 停止+删除容器
-    ssh $user_used@$ip "$DOCKER_START_CMD" # 创建容器
+    # ssh $user_used@$ip "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME" # 停止+删除容器
+    # ssh $user_used@$ip "$DOCKER_START_CMD" # 创建容器
     ssh $user_used@$ip "$DOCKER_RUN_CMD; exit" & # +“&”后，后台起另外一个线程运行
     ((index++))  # 索引自增
     echo "################################################"

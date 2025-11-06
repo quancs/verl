@@ -17,7 +17,7 @@ export NNODES=1
 export NPUS_PER_NODE=8
 export GPUS_PER_NODES=$NPUS_PER_NODE
 #修改为对应主节点IP
-export MASTER_ADDR=90.91.103.34
+export MASTER_ADDR=90.91.103.37
 
 # 修改为当前节点的通信网卡
 SOCKET_IFNAME="enp83s0f0np0"
@@ -29,7 +29,7 @@ export GLOO_SOCKET_IFNAME=$SOCKET_IFNAME
 # GPU相关的环境变量
 export NCCL_SOCKET_IFNAME=$SOCKET_IFNAME
 
-export CUDA_DEVICE_MAX_CONNECTIONS=1   # 利于TP+SP
+# export CUDA_DEVICE_MAX_CONNECTIONS=1   # 利于TP+SP
 ######################
 
 
@@ -69,6 +69,25 @@ export JOB_LOG_DIR=/data/logs
 export JOB_LOG_DIR_CURR=${JOB_LOG_DIR}/$(date +"%Y%m%d_%H%M%S")
 
 ######################
+#################【Debug】#################
+set -x
+# # megatron 打桩
+# rm -rf /usr/local/lib/python3.10/dist-packages/megatron
+# \cp -r /workspace/verl/tmp/megatron /usr/local/lib/python3.10/dist-packages/.
+# echo -e "\033[32mApplied megatron debug done.\033[0m"
+
+# 打桩
+\cp /workspace/verl/recipe/moonlight_GPU/vllm_rollout_spmd.py /workspace/verl/verl/workers/rollout/vllm_rollout/vllm_rollout_spmd.py
+# \cp /workspace/verl/recipe/moonlight_GPU/model_forward.py /workspace/verl/verl/models/mcore/model_forward.py
+# \cp /workspace/verl/recipe/moonlight_GPU/megatron_actor.py /workspace/verl/verl/workers/actor/megatron_actor.py
+
+# mindstudio打桩
+pip install --no-index --find-link=/data/logs/mindstudio mindstudio-probe
+\cp  /workspace/verl/recipe/moonlight_GPU/support_wrap_ops.yaml /usr/local/lib/python3.10/dist-packages/msprobe/pytorch/hook_module/support_wrap_ops.yaml
+
+\cp /workspace/verl/recipe/moonlight_GPU/megatron_workers.py /workspace/verl/verl/workers/megatron_workers.py
+
+set +x
 
 
 #获取当前节点IP
