@@ -3,7 +3,7 @@
     "dump_path": "/data/logs/msprobe_dump_output",
     "rank": [],
     "step": [0],
-    "level": "mix",
+    "level": "L0",
     "enable_dataloader": false,
    "statistics": {
         "scope": [], 

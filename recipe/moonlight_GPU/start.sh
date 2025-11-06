@@ -84,9 +84,9 @@ set -x
 # mindstudio打桩
 pip install --no-index --find-link=/data/logs/mindstudio mindstudio-probe
 \cp  /workspace/verl/recipe/moonlight_GPU/support_wrap_ops.yaml /usr/local/lib/python3.10/dist-packages/msprobe/pytorch/hook_module/support_wrap_ops.yaml
-
-\cp /workspace/verl/recipe/moonlight_GPU/megatron_workers.py /workspace/verl/verl/workers/megatron_workers.py
-
+# \cp /workspace/verl/recipe/moonlight_GPU/mindstudio/megatron_actor.py /workspace/verl/verl/workers/actor/megatron_actor.py
+\cp /workspace/verl/recipe/moonlight_GPU/mindstudio/schedules.py /usr/local/lib/python3.10/dist-packages/megatron/core/pipeline_parallel/schedules.py
+export TORCHDYNAMO_DISABLE=1
 set +x
 
 

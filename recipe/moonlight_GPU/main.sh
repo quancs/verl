@@ -78,8 +78,10 @@ echo -e "$DOCKER_START_CMD"
 echo -e "$DOCKER_RUN_CMD"
 
 echo -e "\nstart process on Master Node"
-# docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME # 停止+删除容器
-# eval $DOCKER_START_CMD # 创建容器
+docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME # 停止+删除容器
+sleep 1
+docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME # 停止+删除容器
+eval $DOCKER_START_CMD # 创建容器
 eval $DOCKER_RUN_CMD &
 sleep 1
 
