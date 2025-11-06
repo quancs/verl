@@ -84,6 +84,22 @@ bash /home/code/verl-gpu/k8s/patch/apply_megatron.sh
 #! [MindSpeed]
 bash /home/code/verl-gpu/k8s/patch/apply_mindspeed.sh
 
+########################################################
+#################【Debug】#################
+# \cp /home/code/verl-gpu/k8s/patch/megatron.patch/0.12.1/Megatron-LM/megatron/core/transformer/transformer_layer.py /opt/Megatron-LM/megatron/core/transformer/transformer_layer.py
+# echo -e "\033[32mApplied megatron transformer_layer debug done.\033[0m"
+
+# \cp /home/code/verl-gpu/k8s/patch/megatron.patch/0.12.1/Megatron-LM/megatron/core/transformer/transformer_block.py /opt/Megatron-LM/megatron/core/transformer/transformer_block.py
+# echo -e "\033[32mApplied megatron transformer_block debug done.\033[0m"
+
+rm -rf /opt/Megatron-LM/megatron
+\cp -r /home/code/verl-gpu/tmp/megatron /opt/Megatron-LM/
+
+# 打桩
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/vllm_rollout_spmd.py /home/code/verl-gpu/verl/workers/rollout/vllm_rollout/vllm_rollout_spmd.py
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/model_forward.py /home/code/verl-gpu/verl/models/mcore/model_forward.py
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/megatron_actor.py /home/code/verl-gpu/verl/workers/actor/megatron_actor.py
+
 
 ####################   拷贝代码   ###################
 

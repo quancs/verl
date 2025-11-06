@@ -32,7 +32,7 @@ DIRs=(
 )
 
 # 映射到docker内的路径
-docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B:ro -v ${DIRs[1]}:/data/models/Moonlight-16B-A3B-dist:ro -v ${DIRs[2]}:/data/datasets:ro -v ${DIRs[3]}:/home/code/verl-gpu:ro -v ${DIRs[4]}:/root/.cache/torch_extensions -v /home/q00887491/logs:/data/logs -v /home/cann:/home/cann:ro"
+docker_v_dirs="-v ${DIRs[0]}:/data/models/Moonlight-16B-A3B:ro -v ${DIRs[1]}:/data/models/Moonlight-16B-A3B-dist:ro -v ${DIRs[2]}:/data/datasets:ro -v ${DIRs[3]}:/home/code/verl-gpu -v ${DIRs[4]}:/root/.cache/torch_extensions -v /home/q00887491/logs:/data/logs -v /home/cann:/home/cann:ro"
 
 # 启动脚本在docker内的路径
 docker_cmd_file="/home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/A3_start.sh"
@@ -82,17 +82,17 @@ echo -e "$DOCKER_START_CMD"
 echo -e "$DOCKER_RUN_CMD"
 
 echo -e "\nstart process on Master Node"
-# docker stop $CONTAINER_NAME
-# docker rm $CONTAINER_NAME
-# eval $DOCKER_START_CMD
+docker stop $CONTAINER_NAME
+docker rm $CONTAINER_NAME
+eval $DOCKER_START_CMD
 eval $DOCKER_RUN_CMD &
-sleep 10
+sleep 1
 
 index=0
 for ip in ${IPs[*]}; do
     echo -e "\nstart process on Node $index $ip"
-    # ssh root@$ip "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME" # 停止+删除容器
-    # ssh root@$ip "$DOCKER_START_CMD" # 创建容器
+    ssh root@$ip "docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME" # 停止+删除容器
+    ssh root@$ip "$DOCKER_START_CMD" # 创建容器
     ssh root@$ip "$DOCKER_RUN_CMD; exit" & # +“&”后，后台起另外一个线程运行
     ((index++))  # 索引自增
     echo "################################################"
