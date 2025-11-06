@@ -941,19 +941,21 @@ class DataProto:
             non_tensor_batch[key] = np.concatenate(val, axis=0)
 
         def meta_info_equal(a, b):
-            if type(a) != dict or type(b) != dict:
-                return a == b
-            if set(a.keys()) != set(b.keys()):
+            if type(a) is not type(b):
                 return False
-            for key in a:
-                if key == 'generate_sequences':
+            if isinstance(a, dict):
+                if a.keys() != b.keys():
+                    return False
+                for key, val_a in a.items():
+                    val_b = b[key]
                     # generate_sequences in different meta_info may be slightly different, ignore it
-                    if round(a[key]) != round(b[key]):
+                    if key == 'generate_sequences' and isinstance(val_a, float) and isinstance(val_b, float):
+                        if not math.isclose(val_a, val_b, rel_tol=0.5):
+                            return False
+                    elif not meta_info_equal(val_a, val_b):
                         return False
-                else:
-                    if a[key] != b[key]:
-                        return False
-            return True
+                return True
+            return a == b
 
         # Merge meta_info with special handling for metrics
         merged_meta_info = {}
