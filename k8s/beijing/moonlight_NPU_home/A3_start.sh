@@ -92,15 +92,19 @@ bash /home/code/verl-gpu/k8s/patch/apply_mindspeed.sh
 # \cp /home/code/verl-gpu/k8s/patch/megatron.patch/0.12.1/Megatron-LM/megatron/core/transformer/transformer_block.py /opt/Megatron-LM/megatron/core/transformer/transformer_block.py
 # echo -e "\033[32mApplied megatron transformer_block debug done.\033[0m"
 
-rm -rf /opt/Megatron-LM/megatron
-\cp -r /home/code/verl-gpu/tmp/megatron /opt/Megatron-LM/
+# rm -rf /opt/Megatron-LM/megatron
+# \cp -r /home/code/verl-gpu/tmp/megatron /opt/Megatron-LM/
 
 # 打桩
 \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/vllm_rollout_spmd.py /home/code/verl-gpu/verl/workers/rollout/vllm_rollout/vllm_rollout_spmd.py
-\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/model_forward.py /home/code/verl-gpu/verl/models/mcore/model_forward.py
-\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/megatron_actor.py /home/code/verl-gpu/verl/workers/actor/megatron_actor.py
+# \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/model_forward.py /home/code/verl-gpu/verl/models/mcore/model_forward.py
+# \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/megatron_actor.py /home/code/verl-gpu/verl/workers/actor/megatron_actor.py
 
-
+# mindstudio打桩
+pip install --no-index --find-link=/data/logs/mindstudio mindstudio-probe
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/support_wrap_ops.yaml /opt/pyvenv/lib/python3.10/site-packages/msprobe/pytorch/hook_module/support_wrap_ops.yaml
+# \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/megatron_actor.py /home/code/verl-gpu/verl/workers/actor/megatron_actor.py
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/schedules.py   /opt/Megatron-LM/megatron/core/pipeline_parallel/schedules.py
 ####################   拷贝代码   ###################
 
 sleep 1

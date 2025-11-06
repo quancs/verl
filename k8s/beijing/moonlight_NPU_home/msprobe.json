@@ -1,0 +1,13 @@
+{
+    "task": "statistics",
+    "dump_path": "/data/logs/msprobe_dump_output",
+    "rank": [],
+    "step": [0],
+    "level": "mix",
+    "enable_dataloader": false,
+   "statistics": {
+        "scope": [], 
+        "list": [],
+        "data_mode": ["all"],
+        "summary_mode": "statistics"}
+}

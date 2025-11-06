@@ -83,6 +83,8 @@ echo -e "$DOCKER_RUN_CMD"
 
 echo -e "\nstart process on Master Node"
 docker stop $CONTAINER_NAME
+sleep 1
+docker stop $CONTAINER_NAME
 docker rm $CONTAINER_NAME
 eval $DOCKER_START_CMD
 eval $DOCKER_RUN_CMD &
