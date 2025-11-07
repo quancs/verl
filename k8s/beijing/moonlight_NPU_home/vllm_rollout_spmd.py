@@ -461,8 +461,12 @@ class vLLMRollout(BaseRollout):
             # response = pad_2d_list_to_length(response, self.pad_token_id, max_length=self.config.response_length).to(
             #     idx.device
             # )
-            self.iteration+=1
-            response=torch.load(f"/data/logs/fsdp-dump/iter{self.iteration}-rank{torch.distributed.get_rank()}.pth").to(idx.device)
+
+            self.iteration += 1
+            response = torch.load(f"/data/logs/fsdp-dump/iter{self.iteration}-rank{torch.distributed.get_rank()}.pth").to(idx.device)
+            iii = 1
+            response = response[32 * iii:32 * (iii + 1), :]
+
             if self.config.calculate_log_probs:
                 rollout_log_probs = pad_2d_list_to_length(
                     rollout_log_probs, -1, max_length=self.config.response_length
