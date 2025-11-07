@@ -104,7 +104,12 @@ bash /home/code/verl-gpu/k8s/patch/apply_mindspeed.sh
 pip install --no-index --find-link=/data/logs/mindstudio mindstudio-probe
 \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/support_wrap_ops.yaml /opt/pyvenv/lib/python3.10/site-packages/msprobe/pytorch/hook_module/support_wrap_ops.yaml
 # \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/megatron_actor.py /home/code/verl-gpu/verl/workers/actor/megatron_actor.py
-\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/schedules.py   /opt/Megatron-LM/megatron/core/pipeline_parallel/schedules.py
+# \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/schedules.py   /opt/Megatron-LM/megatron/core/pipeline_parallel/schedules.py
+
+# monitor
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/megatron_workers.py   /home/code/verl-gpu/verl/workers/megatron_workers.py
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/module_hook.py /opt/pyvenv/lib/python3.10/site-packages/msprobe/pytorch/monitor/module_hook.py
+
 ####################   拷贝代码   ###################
 
 sleep 1
