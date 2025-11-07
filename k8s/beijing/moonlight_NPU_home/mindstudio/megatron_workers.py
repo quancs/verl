@@ -373,8 +373,6 @@ class ActorRolloutRefWorker(MegatronWorker, DistProfilerExtension):
             log_gpu_memory_usage("After ref module init", logger=logger)
             return ref_module, self.hf_config
 
-        if torch.distributed.get_rank()==0:
-            breakpoint()
         # TODO: add more optimizer args into config
         if self._is_actor:
             optim_config_megatron = init_megatron_optim_config(optim_config)
