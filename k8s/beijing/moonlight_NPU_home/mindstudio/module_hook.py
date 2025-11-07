@@ -48,11 +48,9 @@ from msprobe.pytorch.monitor.module_metric import get_metrics, get_summary_write
 from msprobe.pytorch.monitor.optimizer_collect import OptimizerMonFactory
 from msprobe.pytorch.monitor.visualizer import HeatmapVisualizer
 
-
 torch_version_above_or_equal_2 = torch.__version__.split('+')[0] >= '2.0'
 if not torch_version_above_or_equal_2:
     raise ValueError("monitor require torch>=2.0")
-
 
 FORMAT_MAPPING = {
     MonitorConst.TENSORBOARD: SummaryWriterWithAD,
@@ -510,16 +508,17 @@ class TrainerMon:
         if not self.wg_distribution:
             return {}, {}
 
-        if self.weight_hooked:
-            get_metrics(self.ops, self.grad_context.acc, self.eps, self.grad_context.acc_metric)
+        # if self.weight_hooked:
+        #     get_metrics(self.ops, self.grad_context.acc, self.eps, self.grad_context.acc_metric)
 
         get_metrics(self.ops, post_grad_dict, self.eps, self.grad_context.post)
         reduced_grad = self.grad_context.post
 
-        if self.weight_hooked:
-            unreduced_grad = self.grad_context.acc_metric
-        else:
-            unreduced_grad = self.grad_context.pre
+        # if self.weight_hooked:
+        #     unreduced_grad = self.grad_context.acc_metric
+        # else:
+        #     unreduced_grad = self.grad_context.pre
+        unreduced_grad = self.grad_context.pre
 
         return reduced_grad, unreduced_grad
 
@@ -607,18 +606,17 @@ class TrainerMon:
         if not self.wg_distribution:
             return
 
-        if self.weight_hooked:
-            self.summary_writer.write_metrics(self.ops, self.grad_context.acc_metric, step, 'grad_unreduced',
-                                              use_micro_step=self.monitor_mbs_grad)
-        else:
-            self.summary_writer.write_metrics(self.ops, self.grad_context.pre, step, 'grad_unreduced')
+        # if self.weight_hooked:
+        #     self.summary_writer.write_metrics(self.ops, self.grad_context.acc_metric, step, 'grad_unreduced',
+        #                                       use_micro_step=self.monitor_mbs_grad)
+        # else:
+        #     self.summary_writer.write_metrics(self.ops, self.grad_context.pre, step, 'grad_unreduced')
+        self.summary_writer.write_metrics(self.ops, self.grad_context.pre, step, 'grad_unreduced', use_micro_step=self.monitor_mbs_grad)
         self.summary_writer.write_metrics(self.ops, self.grad_context.post, step, 'grad_reduced')
 
     def hook_optimizer(self, optimizer):
         # in DDP by default use params_have_main_grad
         def optimizer_pre_step_hook(optimizer, args, kwargs):
-            
-
             context = self.optimizer_context[optimizer]
 
             if (self.print_struct and not all(value == {} for value in self.module_struct.values())
@@ -729,16 +727,14 @@ class TrainerMon:
 
     def hook_step_final(self, optimizer):
         def step_final_hook(optimizer, args, kwargs):
-            
-
             context = self.optimizer_context[optimizer]
             rank = dist.get_rank() if dist.is_initialized() else None
             # 静态在第0步就可以保存, 动态在第0步不可以, 因为动态设计的就是重置后下一步开启, 第0步的self.monitoring还是False
             if self.monitoring:
                 module_rank_valid = not self.module_rank_list or (
-                            dist.is_initialized() and dist.get_rank() in self.module_rank_list)
+                        dist.is_initialized() and dist.get_rank() in self.module_rank_list)
                 step_condition = (context.step >= self.start_step and (
-                            context.step - self.start_step) % self.step_interval == 0)
+                        context.step - self.start_step) % self.step_interval == 0)
                 if module_rank_valid and step_condition:
                     self.has_collect_times += 1
 
@@ -788,7 +784,6 @@ class TrainerMon:
 
         def patch_step(func, optimizer):
             def wrapper(*args, **kwargs):
-                
                 for hook in self.pre_step_hooks:
                     hook(optimizer, args, kwargs)
                 out = func(*args, **kwargs)
@@ -796,10 +791,10 @@ class TrainerMon:
                     hook(optimizer, args, kwargs)
                 step_final_hook(optimizer, args, kwargs)
                 return out
+
             return wrapper
-        
+
         optimizer.__class__.step = patch_step(optimizer.__class__.step, optimizer)
-        
         return
 
     def hook_modules(self):
@@ -1019,11 +1014,11 @@ class TrainerMon:
                 vpp_stage + module_name,
             ]:
                 if pattern in l2_targets:
-                    return pattern 
+                    return pattern
         elif hook_name in ["linear_hook"]:
             return vpp_stage + squash_param_name(module_name, self.squash_name)
         return ""
-    
+
     def _hook_module(self, target_names, l2_target_names, module: torch.nn.Module, vpp_stage=''):
         if '_modules' not in module.__dict__:
             # nothing to hook
@@ -1157,7 +1152,7 @@ class TrainerMon:
                 context.micro_step = 0
                 context.step += 1
             return
-        
+
         def stack_hook(module, args, kwargs, module_output, name):
             if module not in self.module_fwd_hook_context_by_module:
                 self.module_fwd_hook_context_by_module[module] = ModuleHookContext(name)
@@ -1212,8 +1207,6 @@ class TrainerMon:
         return hooked_count
 
     def _patch_grad_sync(self):
-        
-
         if not self.wg_distribution:
             return
         if self.fsdp_wrapped_module:
@@ -1229,7 +1222,7 @@ class TrainerMon:
         if self.monitor_mbs_grad:
             self._hook_weights()
             return
-        
+
         self.optimizer_mon.patch_grad_sync(self)
 
         if self.enable_megatron or self.enable_deepspeed:
@@ -1289,6 +1282,7 @@ class TrainerMon:
                 get_metrics(self.ops, grad_dict, self.eps, self.grad_context.pre)
                 out = foreach_reduce(fsdp_params, unsharded_grads, *unused)
                 return out
+
             return wrapper
 
         logger.info("Patch fsdp2 foreach_reduce, collect pre_grad metrics.")
@@ -1302,12 +1296,9 @@ class TrainerMon:
         """
         遍历参数的梯度生成函数（grad_acc），并挂载hook，以便在该参数所有梯度计算后，采集通信聚合前梯度数据。
         """
-        
-
-        context = self.grad_context
 
         @torch.no_grad
-        def param_hook(*args, context_dict, param, name):
+        def param_hook(*args, param, name):
             key = name
             if self.monitor_mbs_grad:
                 key += f'{MonitorConst.NAME_SEP}{param.micro_step}'
@@ -1315,13 +1306,15 @@ class TrainerMon:
             key = get_summary_writer_tag_name(key, 'acc_grad', self.rank)
             self.register_param_call_id("param_hook", key)
             param.micro_step += 1
-
+            grad_dict = {}
             if self.monitor_mbs_grad or (param.micro_step == self.micro_batch_number):
                 if self.params_have_main_grad:
                     grad = param.main_grad
                 else:
                     grad = param.grad
-                context_dict[key] = grad.clone().detach().cpu()
+                grad_dict[key] = grad.clone()
+
+            get_metrics(self.ops, grad_dict, self.eps, self.grad_context.pre)
 
             if param.micro_step == self.micro_batch_number:
                 param.micro_step = 0
@@ -1332,7 +1325,7 @@ class TrainerMon:
             param_tmp = param.expand_as(param)
             grad_acc = param_tmp.grad_fn.next_functions[0][0]
             handle = grad_acc.register_hook(
-                partial(param_hook, context_dict=context.acc, param=param, name=name))
+                partial(param_hook, param=param, name=name))
             self.grad_accs.append(grad_acc)
             self.handles['wgrads'].append(handle)
 
