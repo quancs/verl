@@ -50,7 +50,7 @@ top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
 val_top_p=0.7
 
 # Performance Related Parameter
-use_dynamic_bsz=True
+use_dynamic_bsz=False
 actor_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 1))
 infer_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 3))
 
@@ -141,6 +141,7 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/","/
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=${train_ppo_micro_batch_size_per_gpu} \
     actor_rollout_ref.actor.ppo_max_token_len_per_gpu=${actor_ppo_max_token_len} \
     actor_rollout_ref.actor.optim.lr=3e-6 \
+    +actor_rollout_ref.actor.megatron.override_transformer_config.persist_layer_norm=False \
     +actor_rollout_ref.actor.optim.override_optimizer_config.use_precision_aware_optimizer=True \
     +actor_rollout_ref.actor.megatron.override_transformer_config.moe_router_dtype=fp32 \
     actor_rollout_ref.actor.megatron.param_offload=True \
@@ -214,6 +215,10 @@ ray job submit --runtime-env-json='{"working_dir": ".", "excludes": ["/.git/","/
     trainer.resume_mode=auto \
     trainer.rollout_data_dir=$JOB_LOG_DIR_CURR/rollout \
     trainer.log_val_generations=10 2>&1 | tee $JOB_LOG_DIR_CURR/run.log
+
+
+    # +actor_rollout_ref.actor.megatron.override_transformer_config.sequence_parallel=False \
+
 
 
     # +actor_rollout_ref.actor.megatron.override_transformer_config.num_layers_in_first_pipeline_stage=$first_layer \

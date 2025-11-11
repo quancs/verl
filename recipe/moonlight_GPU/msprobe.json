@@ -1,13 +1,13 @@
 {
     "task": "statistics",
-    "dump_path": "/data/logs/msprobe_dump_output",
+    "dump_path": "/data/logs/msprobe_dump_output_1108",
     "rank": [],
     "step": [0],
     "level": "L0",
     "enable_dataloader": false,
    "statistics": {
         "scope": [], 
-        "list": [],
+        "list": ["Module.module.module.embedding.word_embeddings.VocabParallelEmbedding"],
         "data_mode": ["all"],
         "summary_mode": "statistics"}
 }

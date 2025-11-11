@@ -1,0 +1,16 @@
+{
+  "targets": {},
+  "print_struct": false,
+  "module_ranks": [],
+  "xy_distribution": true,
+  "wg_distribution": true,
+  "monitor_mbs_grad": true,
+  "format": "csv",
+  "ops": [
+    "norm",
+    "mean",
+    "min",
+    "max"
+  ],
+  "ndigits": 20
+}

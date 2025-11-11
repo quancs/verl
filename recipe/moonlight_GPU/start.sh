@@ -83,10 +83,26 @@ set -x
 
 # mindstudio打桩
 pip install --no-index --find-link=/data/logs/mindstudio mindstudio-probe
-\cp  /workspace/verl/recipe/moonlight_GPU/support_wrap_ops.yaml /usr/local/lib/python3.10/dist-packages/msprobe/pytorch/hook_module/support_wrap_ops.yaml
+\cp /workspace/verl/recipe/moonlight_GPU/support_wrap_ops.yaml /usr/local/lib/python3.10/dist-packages/msprobe/pytorch/hook_module/support_wrap_ops.yaml
+\cp /workspace/verl/recipe/moonlight_GPU/mindstudio/module_hook.py /usr/local/lib/python3.10/dist-packages/msprobe/pytorch/monitor/module_hook.py
+\cp /workspace/verl/recipe/moonlight_GPU/mindstudio/optimizer_collect.py /usr/local/lib/python3.10/dist-packages/msprobe/pytorch/monitor/optimizer_collect.py
+
 # \cp /workspace/verl/recipe/moonlight_GPU/mindstudio/megatron_actor.py /workspace/verl/verl/workers/actor/megatron_actor.py
 \cp /workspace/verl/recipe/moonlight_GPU/mindstudio/schedules.py /usr/local/lib/python3.10/dist-packages/megatron/core/pipeline_parallel/schedules.py
+# \cp /workspace/verl/tmp/megatron/core/models/common/embeddings/language_model_embedding.py /usr/local/lib/python3.10/dist-packages/megatron/core/models/common/embeddings/language_model_embedding.py
+\cp /workspace/verl/recipe/moonlight_GPU/mindstudio/megatron_workers.py /workspace/verl/verl/workers/megatron_workers.py
+
+# 小算子
+\cp /workspace/verl/recipe/moonlight_GPU/mindstudio/gpt_layer_specs.py /usr/local/lib/python3.10/dist-packages/megatron/core/models/gpt/gpt_layer_specs.py
+# \cp /workspace/verl/recipe/moonlight_GPU/mindstudio/bridge.py /usr/local/lib/python3.10/dist-packages/mbridge/core/bridge.py
+\cp /workspace/verl/recipe/moonlight_GPU/mindstudio/dot_product_attention.py /usr/local/lib/python3.10/dist-packages/megatron/core/transformer/dot_product_attention.py
+
+# \cp /workspace/verl/tmp/megatron/core/transformer/multi_latent_attention.py /usr/local/lib/python3.10/dist-packages/megatron/core/transformer/multi_latent_attention.py
+# \cp /workspace/verl/tmp/transformer_engine/pytorch/attention.py  /usr/local/lib/python3.10/dist-packages/transformer_engine/pytorch/attention.py
+
+export MONITOR_OUTPUT_DIR=$JOB_LOG_DIR_CURR/monitor_output
 export TORCHDYNAMO_DISABLE=1
+# export NVTE_FUSED_ATTN_USE_FAv2_BWD=1
 set +x
 
 
