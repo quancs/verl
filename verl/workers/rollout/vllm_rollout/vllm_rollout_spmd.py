@@ -162,6 +162,7 @@ class vLLMRollout(BaseRollout):
         device_mesh: DeviceMesh,
     ):
         super().__init__(config, model_config, device_mesh)
+        self.iteration=0
 
         if config.layered_summon:
             self.sleep_level = 1
@@ -412,54 +413,58 @@ class vLLMRollout(BaseRollout):
         # users can customize different sampling_params at different run
         with self.update_sampling_params(**kwargs):
             self.sampling_params.detokenize = True
-            outputs = self.inference_engine.generate(
-                prompts=vllm_inputs,  # because we have already convert it to prompt token id
-                sampling_params=self.sampling_params,
-                lora_request=lora_requests,
-                use_tqdm=True,
-            )
+            # outputs = self.inference_engine.generate(
+            #     prompts=vllm_inputs,  # because we have already convert it to prompt token id
+            #     sampling_params=self.sampling_params,
+            #     lora_request=lora_requests,
+            #     use_tqdm=True,
+            # )
 
-            #! 打印推理结果信息
-            try:
-                rank = torch.distributed.get_rank()
-                if rank == 0: #* 只打印 rank0 的
-                    for output in outputs:
-                        #* 写死的，只打印 1 份
-                        #* 只打印部分
-                        print_n_gen = 1 # len(output.outputs)
-                        for sample_id in range(print_n_gen):
-                            response_text = output.outputs[sample_id].text
-                            print(f"===>Output===>", flush=True)
-                            if len(response_text) <= 820:
-                                print(response_text, flush=True)
-                            else:
-                                print(response_text[:400], flush=True)
-                                print("\n...\n...\n", flush=True)
-                                print(response_text[-400:], flush=True)
+            # #! 打印推理结果信息
+            # try:
+            #     rank = torch.distributed.get_rank()
+            #     if rank == 0: #* 只打印 rank0 的
+            #         for output in outputs:
+            #             #* 写死的，只打印 1 份
+            #             #* 只打印部分
+            #             print_n_gen = 1 # len(output.outputs)
+            #             for sample_id in range(print_n_gen):
+            #                 response_text = output.outputs[sample_id].text
+            #                 print(f"===>Output===>", flush=True)
+            #                 if len(response_text) <= 820:
+            #                     print(response_text, flush=True)
+            #                 else:
+            #                     print(response_text[:400], flush=True)
+            #                     print("\n...\n...\n", flush=True)
+            #                     print(response_text[-400:], flush=True)
 
-                            print(f"<===END, 生成结束原因: {output.outputs[sample_id].finish_reason}", flush=True)
+            #                 print(f"<===END, 生成结束原因: {output.outputs[sample_id].finish_reason}", flush=True)
 
-            except Exception as e:
-                print(f"Print generation failed! \nreason is {e.__repr__()}")
+            # except Exception as e:
+            #     print(f"Print generation failed! \nreason is {e.__repr__()}")
 
-            # TODO(sgm): disable logprob when recompute_log_prob is enable
-            # if n = 1: (bs, response_length) ; if n > 1: (bs * n, response_length)
+            # # TODO(sgm): disable logprob when recompute_log_prob is enable
+            # # if n = 1: (bs, response_length) ; if n > 1: (bs * n, response_length)
 
-            response = []
-            rollout_log_probs = []
-            for output in outputs:
-                for sample_id in range(len(output.outputs)):
-                    response_ids = output.outputs[sample_id].token_ids
-                    response.append(response_ids)
-                    if self.config.calculate_log_probs:
-                        curr_log_prob = []
-                        for i, logprob in enumerate(output.outputs[sample_id].logprobs):
-                            curr_log_prob.append(logprob[response_ids[i]].logprob)
-                        rollout_log_probs.append(curr_log_prob)
+            # response = []
+            # rollout_log_probs = []
+            # for output in outputs:
+            #     for sample_id in range(len(output.outputs)):
+            #         response_ids = output.outputs[sample_id].token_ids
+            #         response.append(response_ids)
+            #         if self.config.calculate_log_probs:
+            #             curr_log_prob = []
+            #             for i, logprob in enumerate(output.outputs[sample_id].logprobs):
+            #                 curr_log_prob.append(logprob[response_ids[i]].logprob)
+            #             rollout_log_probs.append(curr_log_prob)
 
-            response = pad_2d_list_to_length(response, self.pad_token_id, max_length=self.config.response_length).to(
-                idx.device
-            )
+            # response = pad_2d_list_to_length(response, self.pad_token_id, max_length=self.config.response_length).to(
+            #     idx.device
+            # )
+
+            self.iteration += 1
+            response = torch.load(f"/data/logs/fsdp-dump/iter{self.iteration}-rank{torch.distributed.get_rank()}.pth").to(idx.device)
+
             if self.config.calculate_log_probs:
                 rollout_log_probs = pad_2d_list_to_length(
                     rollout_log_probs, -1, max_length=self.config.response_length

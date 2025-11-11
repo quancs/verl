@@ -474,24 +474,28 @@ def forward_backward_no_pipelining(
 
 
     ################
-    if not forward_only:
-        import os
-        if os.environ['JOB_LOG_DIR_CURR']:
-            dump_path=f"{os.environ['JOB_LOG_DIR_CURR']}/msprobe_dump_output"
-        else:
-            dump_path="/data/logs/msprobe_dump_output"
-        from msprobe.pytorch import PrecisionDebugger
-        debugger = PrecisionDebugger(dump_path=dump_path, config_path="/home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/msprobe.json", level="mix")
+    # if not forward_only:
+    #     import os
+    #     if os.environ['JOB_LOG_DIR_CURR']:
+    #         dump_path=f"{os.environ['JOB_LOG_DIR_CURR']}/msprobe_dump_output"
+    #     else:
+    #         dump_path="/data/logs/msprobe_dump_output"
+    #     from msprobe.pytorch import PrecisionDebugger
+    #     debugger = PrecisionDebugger(dump_path=dump_path, config_path="/home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/msprobe.json", level="mix")
 
     forward_data_store = []
     input_tensor, output_tensor_grad = None, None
     total_num_tokens = torch.zeros([], dtype=torch.int, device="cuda")
+
+    # if not forward_only:
+    #     num_microbatches = 1
+
     with no_sync_func():
         for i in range(num_microbatches - 1):
 
             #####################  msprobe  start  ############################
-            if not forward_only:
-                debugger.start(model=model)
+            # if not forward_only:
+            #     debugger.start(model=model)
 
             output_tensor, num_tokens = forward_step(
                 forward_step_func,
@@ -508,9 +512,10 @@ def forward_backward_no_pipelining(
             total_num_tokens += num_tokens
             if not forward_only:
                 backward_step(input_tensor, output_tensor, output_tensor_grad, model_type, config)
-
-                debugger.stop()
-                debugger.step()  # step +1
+                # if torch.distributed.get_rank()==0:
+                #     breakpoint()
+                # debugger.stop()
+                # debugger.step()  # step +1
             #####################  msprobe  end  ############################
 
     # Run computation for last microbatch out of context handler (want to

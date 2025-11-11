@@ -22,6 +22,11 @@ import os
 import time
 from typing import Any, Optional
 
+
+from msprobe.pytorch import seed_all
+seed_all(mode=True) # deterministic
+
+
 import psutil
 import torch
 import torch.distributed

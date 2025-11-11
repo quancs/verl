@@ -28,10 +28,10 @@ LIB_PATH=/opt/python3.10/lib/
 export LD_LIBRARY_PATH=$LIB_PATH:$LD_LIBRARY_PATH:/home/code/verl-gpu/docker/pkg/
 
 # Cann环境
-# source /usr/local/Ascend/ascend-toolkit/set_env.sh;
-# source /usr/local/Ascend/nnal/atb/set_env.sh;
-source /home/cann/8.2.RC2.B030/ascend-toolkit/set_env.sh;
-source /home/cann/8.2.RC2.B030/nnal/atb/set_env.sh;
+source /usr/local/Ascend/ascend-toolkit/set_env.sh;
+source /usr/local/Ascend/nnal/atb/set_env.sh;
+# source /home/cann/8.2.RC2.B030/ascend-toolkit/set_env.sh;
+# source /home/cann/8.2.RC2.B030/nnal/atb/set_env.sh;
 
 # ray重启
 ray stop --force
@@ -39,10 +39,10 @@ rm -rf /tmp/ray
 
 # 安装新的package
 # pip install /opt/verl/recipe/moonlight_NPU/pystack-1.5.1-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl
-pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/blobfile-3.1.0-py3-none-any.whl --no-deps
-pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/lxml-6.0.2-cp310-cp310-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl --no-deps
-pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/tensordict-0.10.0-cp310-cp310-manylinux_2_28_aarch64.whl --no-deps
-pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/pyvers-0.1.0-py3-none-any.whl --no-deps
+# pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/blobfile-3.1.0-py3-none-any.whl --no-deps
+# pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/lxml-6.0.2-cp310-cp310-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl --no-deps
+# pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/tensordict-0.10.0-cp310-cp310-manylinux_2_28_aarch64.whl --no-deps
+# pip install /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/pyvers-0.1.0-py3-none-any.whl --no-deps
 
 # 机器环境变量
 export NNODES=1
@@ -92,9 +92,6 @@ bash /home/code/verl-gpu/k8s/patch/apply_mindspeed.sh
 # \cp /home/code/verl-gpu/k8s/patch/megatron.patch/0.12.1/Megatron-LM/megatron/core/transformer/transformer_block.py /opt/Megatron-LM/megatron/core/transformer/transformer_block.py
 # echo -e "\033[32mApplied megatron transformer_block debug done.\033[0m"
 
-# rm -rf /opt/Megatron-LM/megatron
-# \cp -r /home/code/verl-gpu/tmp/megatron /opt/Megatron-LM/
-
 # 打桩
 \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/vllm_rollout_spmd.py /home/code/verl-gpu/verl/workers/rollout/vllm_rollout/vllm_rollout_spmd.py
 # \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/model_forward.py /home/code/verl-gpu/verl/models/mcore/model_forward.py
@@ -104,11 +101,22 @@ bash /home/code/verl-gpu/k8s/patch/apply_mindspeed.sh
 pip install --no-index --find-link=/data/logs/mindstudio mindstudio-probe
 \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/support_wrap_ops.yaml /opt/pyvenv/lib/python3.10/site-packages/msprobe/pytorch/hook_module/support_wrap_ops.yaml
 # \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/megatron_actor.py /home/code/verl-gpu/verl/workers/actor/megatron_actor.py
-# \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/schedules.py   /opt/Megatron-LM/megatron/core/pipeline_parallel/schedules.py
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/schedules.py   /opt/Megatron-LM/megatron/core/pipeline_parallel/schedules.py
 
 # monitor
 \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/megatron_workers.py   /home/code/verl-gpu/verl/workers/megatron_workers.py
 \cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/mindstudio/module_hook.py /opt/pyvenv/lib/python3.10/site-packages/msprobe/pytorch/monitor/module_hook.py
+export MONITOR_OUTPUT_DIR=$JOB_LOG_DIR_CURR/monitor_output
+
+
+# # 小算子：
+# 1. 替换 gpt_layer_specs.py 用于使用小算子
+# 2. 替换 dot_product_attention.py 用于增加适配thd格式的输入的MyDotProductAttention
+# 3. 替换 bridge.py 用于正确加载权重
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/xsz/bridge.py  /home/code/verl-gpu/mbridge/core/bridge.py
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/xsz/gpt_layer_specs.py  /opt/Megatron-LM/megatron/core/models/gpt/gpt_layer_specs.py
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/xsz/dot_product_attention.py /opt/Megatron-LM/megatron/core/transformer/dot_product_attention.py
+\cp /home/code/verl-gpu/k8s/beijing/moonlight_NPU_home/xsz/multi_latent_attention.py  /opt/Megatron-LM/megatron/core/transformer/multi_latent_attention.py
 
 ####################   拷贝代码   ###################
 

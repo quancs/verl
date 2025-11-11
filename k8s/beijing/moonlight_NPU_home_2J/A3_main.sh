@@ -57,8 +57,8 @@ echo "#################  数据同步结束  ####################"
 
 echo "#################  训练启动中  ####################"
 # docker启动
-DOCKER_IMAGES_ID=swr.cn-north-4.myhuaweicloud.com/wlf_darkmaster/pytorch_ascend:pytorch_2.7.1-cann_8.2.rc1-py_3.10-aarch64_0928
-CONTAINER_NAME=test11
+DOCKER_IMAGES_ID=swr.cn-north-4.myhuaweicloud.com/wlf_darkmaster/x-contion-aarch64/rl_npu:verl-A3-cann82rc2-vllm0100-mcore012-torch27
+CONTAINER_NAME=verl_dx
 
 DOCKER_START_CMD="docker run --name ${CONTAINER_NAME} -itd --net=host --shm-size=500g \
     --privileged=true \
@@ -82,6 +82,8 @@ echo -e "$DOCKER_START_CMD"
 echo -e "$DOCKER_RUN_CMD"
 
 echo -e "\nstart process on Master Node"
+docker stop $CONTAINER_NAME
+docker rm $CONTAINER_NAME
 docker stop $CONTAINER_NAME
 docker rm $CONTAINER_NAME
 eval $DOCKER_START_CMD

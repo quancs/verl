@@ -25,9 +25,9 @@ overlong_buffer_len=$((1024 * 1))
 overlong_penalty_factor=1.0
 
 loss_agg_mode="token-mean"
-train_prompt_bsz=2
+train_prompt_bsz=16
 n_resp_per_prompt=16
-train_prompt_mini_bsz=2
+train_prompt_mini_bsz=16
 train_ppo_micro_batch_size_per_gpu=2
 infer_ppo_micro_batch_size_per_gpu=2
 # Paths
