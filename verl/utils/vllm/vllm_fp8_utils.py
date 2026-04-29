@@ -122,9 +122,9 @@ def is_fp8_weight(name, model):
 
 def is_mxfp8_vllm_ascend(quant_config):
     try:
-        from vllm_ascend.quantization.modelslim_config import AscendModelSlimConfig
+        from vllm_ascend.quantization.quant_config import AscendQuantConfig
 
-        if isinstance(quant_config, AscendModelSlimConfig):
+        if isinstance(quant_config, AscendQuantConfig):
             quant_method = quant_config.quant_description.get("quant_method")
             return quant_method in ["ascend"]
         return False
@@ -286,9 +286,11 @@ def quant_weights(weights, model, quant_config, dtype=torch.bfloat16):
         yield (k, param_lp)
 
         # Yield the scale with appropriate naming based on vLLM version
-        if _use_scale_not_scale_inv and "expert" not in k:
+        if is_mxfp8_npu:
             yield (k + "_scale", param_scale)
-        elif not is_mxfp8_npu:
+        elif _use_scale_not_scale_inv and "expert" not in k:
+            yield (k + "_scale", param_scale)
+        else:
             yield (k + "_scale_inv", param_scale)
 
         # Explicitly delete original tensor reference to help GC
@@ -326,6 +328,7 @@ def load_quanted_weights(weights, model_runner):
 
     if is_mxfp8_npu:
         # Re-apply MXFP8 transformations after weight loading
+        logger.info("Re-applying MXFP8 transformations after weight loading")
         apply_mxfp8_transformation_after_loading(model)
 
     return loaded_params
