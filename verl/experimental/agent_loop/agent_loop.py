@@ -929,7 +929,16 @@ class AgentLoopManager:
 
         # for recipe to change
         if not hasattr(self, "rollout_replica_class"):
+            ###############################################################
+            # solve ASCEND_RT_VISIBLE_DEVICES is not set
+            temp = os.environ['ASCEND_RT_VISIBLE_DEVICES']
+            os.environ['ASCEND_RT_VISIBLE_DEVICES'] = "0,1,2,3,4,5,6,7"
+            ###############################################################
             self.rollout_replica_class = get_rollout_replica_class(self.rollout_config.name)
+
+            ###############################################################
+            os.environ['ASCEND_RT_VISIBLE_DEVICES'] = temp
+            ###############################################################
         if not hasattr(self, "agent_loop_workers_class"):
             self.agent_loop_workers_class = ray.remote(AgentLoopWorker)
 
