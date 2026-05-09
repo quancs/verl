@@ -153,13 +153,22 @@ class ActorRolloutRefWorker(Worker, DistProfilerExtension):
         if not torch.distributed.is_initialized():
             rank = int(os.environ.get("RANK", 0))
             world_size = int(os.environ.get("WORLD_SIZE", 1))
+
+            ###################################
+            # 不设置这个参数会报错
+            import torch_npu
+            options = torch_npu._C._distributed_c10d.ProcessGroupHCCL.Options()
+            options.hccl_config = {'hccl_op_expansion_mode': 5}
+
             torch.distributed.init_process_group(
                 backend=f"cpu:gloo,{get_device_name()}:{get_nccl_backend()}",
                 rank=rank,
                 world_size=world_size,
                 timeout=datetime.timedelta(seconds=self.config.get("nccl_timeout", 600)),
                 init_method=os.environ.get("DIST_INIT_METHOD", None),
+                pg_options=options,
             )
+            ###################################
 
         # build device mesh for FSDP
         world_size = torch.distributed.get_world_size()
@@ -1212,11 +1221,20 @@ class CriticWorker(Worker, DistProfilerExtension):
 
         self.config = config
         if not torch.distributed.is_initialized():
+            ##########################################################################
+            # 不设置这个参数会报错
+            import torch_npu
+            options = torch_npu._C._distributed_c10d.ProcessGroupHCCL.Options()
+            options.hccl_config = {'hccl_op_expansion_mode': 5}
+
             torch.distributed.init_process_group(
                 backend=get_nccl_backend(),
                 timeout=datetime.timedelta(seconds=self.config.get("nccl_timeout", 600)),
                 init_method=os.environ.get("DIST_INIT_METHOD", None),
+                pg_options=options,
             )
+            ##########################################################################
+
         self.config: FSDPCriticConfig = config
 
         # build device mesh for Ulysses Sequence Parallel

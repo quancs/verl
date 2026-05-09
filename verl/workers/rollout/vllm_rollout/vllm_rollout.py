@@ -214,7 +214,7 @@ class vLLMAsyncRollout(BaseRollout):
             lora_dtype = getattr(torch, self.config.dtype)
             self.vllm_config.lora_config = LoRAConfig(lora_dtype=lora_dtype, **self.lora_config)
         if self.config.quantization is not None:
-            _SUPPORTED_QUANTIZATION = ["fp8", "torchao"]
+            _SUPPORTED_QUANTIZATION = ["fp8", "torchao", "ascend"]
             if self.config.quantization not in _SUPPORTED_QUANTIZATION:
                 raise ValueError(
                     f"Currently only support {_SUPPORTED_QUANTIZATION} quantization, got: {self.config.quantization}"
