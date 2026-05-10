@@ -169,7 +169,8 @@ def quant_weights(weights, model, quant_config, dtype=torch.bfloat16):
     """
 
     is_mxfp8_npu = is_mxfp8_vllm_ascend(quant_config)
-
+    if is_mxfp8_npu:
+        import torch_npu
     # vLLM v0.11-v0.12 renamed weight_scale_inv → weight_scale in process_weights_after_loading,
     # so load_weights expects "_scale" suffix. v0.14+ keeps weight_scale_inv, so expects "_scale_inv".
     _use_scale_not_scale_inv = version.parse("0.11.0") <= version.parse(vllm.__version__) < version.parse("0.14.0")
