@@ -127,15 +127,18 @@ def is_fp8_weight(name, model):
 
 def is_mxfp8_vllm_ascend(quant_config):
     try:
-        from vllm_ascend.quantization.quant_config import AscendQuantConfig
+        # in vllm-ascend 0.19, AscendQuantConfig is removed
+        # from vllm_ascend.quantization.quant_config import AscendQuantConfig
         from vllm_ascend.quantization.modelslim_config import AscendModelSlimConfig
 
-        if isinstance(quant_config, AscendQuantConfig) or isinstance(quant_config, AscendModelSlimConfig):
+        # if isinstance(quant_config, AscendQuantConfig) or isinstance(quant_config, AscendModelSlimConfig):
+        if isinstance(quant_config, AscendModelSlimConfig):
             quant_method = quant_config.quant_description.get("quant_method")
             return quant_method in ["ascend"]
         return False
-    except ImportError:
+    except ImportError as e:
         # vllm_ascend not installed, so this can't be an Ascend MXFP8 config
+        logger.warning(f"vllm_ascend not installed, so this can't be an Ascend MXFP8 config: {e}")
         return False
 
 
