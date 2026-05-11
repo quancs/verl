@@ -184,7 +184,11 @@ def quant_weights(weights, model, quant_config, dtype=torch.bfloat16):
         if torch.distributed.get_rank() == 0:
             logger.debug(f"Quantizing to FP8 blockwise: {k}")
         if is_mxfp8_npu:
-            param_lp, param_scale = torch_npu.npu_dynamic_mx_quant(v.to(dtype), axis=-1, dst_type=torch_npu.float8_e4m3fn)
+            param_lp, param_scale = torch_npu.npu_dynamic_mx_quant(
+                v.to(dtype),
+                axis=-1,
+                dst_type=torch_npu.float8_e4m3fn,
+            )
             param_scale = param_scale.flatten(-2, -1)
         else:
             param_lp, param_scale = scaled_fp8_blockwise(
