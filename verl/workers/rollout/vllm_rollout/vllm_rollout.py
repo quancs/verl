@@ -238,7 +238,10 @@ class vLLMAsyncRollout(BaseRollout):
         elif method == "load_model":
             return self._load_model(*args, **kwargs)
         else:
-            return self.inference_engine.execute_method(method, *args, **kwargs)
+            if hasattr(self.inference_engine, "execute_method"):
+                return self.inference_engine.execute_method(method, *args, **kwargs)
+            else:
+                return getattr(self.inference_engine, method)(*args, **kwargs)
 
     async def resume(self, tags: list[str]):
         """Resume rollout weights or kv cache in GPU memory.
