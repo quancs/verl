@@ -174,6 +174,7 @@ class vLLMAsyncRollout(BaseRollout):
                 await self.socket.send(pickle.dumps(result))
             except Exception as e:
                 logger.exception(f"vLLMAsyncRollout _loop_forever error: {e}")
+                breakpoint()
                 await self.socket.send(pickle.dumps(e))
                 break
 
